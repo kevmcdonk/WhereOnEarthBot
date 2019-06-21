@@ -1,0 +1,13 @@
+C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\bin\Debug\netcoreapp2.1\Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter.dll
+C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\bin\Debug\netcoreapp2.1\Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices.Interface.dll
+C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\bin\Debug\netcoreapp2.1\Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices.dll
+C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\bin\Debug\netcoreapp2.1\DailyBingChallengeBot.Tests.deps.json
+C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\bin\Debug\netcoreapp2.1\DailyBingChallengeBot.Tests.runtimeconfig.json
+C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\bin\Debug\netcoreapp2.1\DailyBingChallengeBot.Tests.runtimeconfig.dev.json
+C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\bin\Debug\netcoreapp2.1\DailyBingChallengeBot.Tests.dll
+C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\bin\Debug\netcoreapp2.1\DailyBingChallengeBot.Tests.pdb
+C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\obj\Debug\netcoreapp2.1\DailyBingChallengeBot.Tests.csproj.CoreCompileInputs.cache
+C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\obj\Debug\netcoreapp2.1\DailyBingChallengeBot.Tests.AssemblyInfoInputs.cache
+C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\obj\Debug\netcoreapp2.1\DailyBingChallengeBot.Tests.AssemblyInfo.cs
+C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\obj\Debug\netcoreapp2.1\DailyBingChallengeBot.Tests.dll
+C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\obj\Debug\netcoreapp2.1\DailyBingChallengeBot.Tests.pdb
