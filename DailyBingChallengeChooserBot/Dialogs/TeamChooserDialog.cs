@@ -17,12 +17,12 @@ using System.Collections.Generic;
 
 namespace Microsoft.BotBuilderSamples.Dialogs
 {
-    public class BingChooserDialog : ComponentDialog
+    public class TeamChooserDialog : ComponentDialog
     {
         protected readonly IConfiguration Configuration;
         protected readonly ILogger Logger;
 
-        public BingChooserDialog(string id, IConfiguration configuration, ILogger logger)
+        public TeamChooserDialog(string id, IConfiguration configuration, ILogger logger)
             : base(id)
 
         {
