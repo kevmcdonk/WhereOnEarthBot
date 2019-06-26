@@ -10,5 +10,8 @@ namespace DailyBingChallengeBot.Models
         public string Url { get; set; }
         public string ImageText { get; set; }
         public string ImageRegion { get; set; }
+
+        public float Longitutde { get; set; }
+        public float Latitude { get; set; }
     }
 }

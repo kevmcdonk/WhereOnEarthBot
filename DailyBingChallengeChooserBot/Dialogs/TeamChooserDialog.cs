@@ -43,7 +43,7 @@ namespace Microsoft.BotBuilderSamples.Dialogs
 
         private async Task<DialogTurnResult> IntroStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
-            StorageService storageService = new StorageService(Configuration["DailyBingStorageConnectionString"]);
+            StorageService storageService = new StorageService(Configuration["DailyBingStorageConnectionString"], Configuration["DailyBingResultsContainer"]);
             DailyBing dailyBing = await storageService.GetDailyBing();
             DailyBingInfo info = await storageService.GetLatestInfo();
             bool allresultsreceived = CheckWhetherAllEntriesReceived(dailyBing, info);
@@ -66,11 +66,11 @@ namespace Microsoft.BotBuilderSamples.Dialogs
             if (entry == null)
             {
                 await stepContext.Context.SendActivityAsync(MessageFactory.Text("Sorry, bing maps couldn't identify that location. Please try again."), cancellationToken);
-                return await stepContext.BeginDialogAsync(nameof(BingChooserDialog), null, cancellationToken);
+                return await stepContext.BeginDialogAsync(nameof(BingGuesserDialog), null, cancellationToken);
             }
             else
             {
-                StorageService storageService = new StorageService(Configuration["DailyBingStorageConnectionString"]);
+                StorageService storageService = new StorageService(Configuration["DailyBingStorageConnectionString"], Configuration["DailyBingResultsContainer"]);
                 DailyBing dailyBing = await storageService.GetDailyBing();
 
 
@@ -92,7 +92,7 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                 else
                 {
                     await stepContext.Context.SendActivityAsync(MessageFactory.Text("Still more results from users to come."), cancellationToken);
-                    return await stepContext.BeginDialogAsync(nameof(BingChooserDialog), null, cancellationToken);
+                    return await stepContext.BeginDialogAsync(nameof(BingGuesserDialog), null, cancellationToken);
                 }
             }
         }

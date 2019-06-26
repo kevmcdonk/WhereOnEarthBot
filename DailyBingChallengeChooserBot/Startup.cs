@@ -11,6 +11,10 @@ using Microsoft.Extensions.DependencyInjection;
 
 using Microsoft.BotBuilderSamples.Bots;
 using Microsoft.BotBuilderSamples.Dialogs;
+using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.Bot.Builder.ApplicationInsights;
+using Microsoft.Bot.Builder.Integration.ApplicationInsights.Core;
+
 
 namespace Microsoft.BotBuilderSamples
 {
@@ -28,6 +32,23 @@ namespace Microsoft.BotBuilderSamples
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // Add Application Insights services into service collection
+            services.AddApplicationInsightsTelemetry();
+
+            // Add the standard telemetry client
+            services.AddSingleton<IBotTelemetryClient, BotTelemetryClient>();
+
+            // Add ASP middleware to store the HTTP body, mapped with bot activity key, in the httpcontext.items
+            // This will be picked by the TelemetryBotIdInitializer
+            services.AddTransient<TelemetrySaveBodyASPMiddleware>();
+
+            // Add telemetry initializer that will set the correlation context for all telemetry items
+            services.AddSingleton<ITelemetryInitializer, OperationCorrelationTelemetryInitializer>();
+
+            // Add telemetry initializer that sets the user ID and session ID (in addition to other 
+            // bot-specific properties, such as activity ID)
+            services.AddSingleton<ITelemetryInitializer, TelemetryBotIdInitializer>();
+
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
             // Create the Bot Framework Adapter with error handling enabled.
@@ -64,6 +85,7 @@ namespace Microsoft.BotBuilderSamples
 
             app.UseDefaultFiles();
             app.UseStaticFiles();
+            app.UseBotApplicationInsights();
 
             app.UseMvc();
         }

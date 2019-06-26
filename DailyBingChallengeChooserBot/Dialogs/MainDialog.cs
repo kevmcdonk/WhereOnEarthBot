@@ -39,17 +39,9 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                 }));
 
             AddDialog(new TextPrompt(nameof(TextPrompt)));
-            AddDialog(new BingChooserDialog(nameof(BingChooserDialog), configuration, logger));
+            AddDialog(new BingGuesserDialog(nameof(BingGuesserDialog), configuration, logger));
             AddDialog(new WaterfallDialog(nameof(WaterfallDialog), new WaterfallStep[]
             {
-                /*
-                PromptStepAsync,
-                LoginStepAsync,
-                CommandStepAsync,
-                ProcessStepAsync,
-                CommandStepAsync,
-                ProcessResponsesAsync
-                */
                 IntroStepAsync,
                 ActStepAsync,
                 FinalStepAsync
@@ -71,19 +63,27 @@ namespace Microsoft.BotBuilderSamples.Dialogs
             else
             {
                 IMessageActivity reply = null;
-                StorageService storageService = new StorageService(Configuration["DailyBingStorageConnectionString"]);
+                StorageService storageService = new StorageService(Configuration["DailyBingStorageConnectionString"], Configuration["DailyBingResultsContainer"]);
                 DailyBing dailyBing = await storageService.GetDailyBing();
                 if (dailyBing.photoUrl == null)
                 {
                     reply = MessageFactory.Attachment(new List<Attachment>());
-                    int imageIndex = await GetImageIndex(stepContext);
-                    Attachment attachment = GetBingImageChoiceAttachment(imageIndex);
-                    // reply.AttachmentLayout = AttachmentLayoutTypes.Carousel;
-                    reply.Attachments.Add(attachment);
+                    Attachment attachment = null;
 
+                    DailyBingInfo info = await GetInfo(stepContext);
+
+                    if (info.currentSource == ImageSource.Google)
+                    {
+                        attachment = await GetGoogleImageChoiceAttachment();
+                    }
+                    else
+                    {
+                        int imageIndex = info.currentImageIndex;
+                        attachment = GetBingImageChoiceAttachment(imageIndex);
+                    }
+
+                    reply.Attachments.Add(attachment);
                     await stepContext.Context.SendActivityAsync(reply);
-                    //TODO: Replace with ChoicePrompt?
-                    //return await stepContext.NextAsync(null, cancellationToken);
                     return await stepContext.PromptAsync(nameof(TextPrompt), new PromptOptions { Prompt = MessageFactory.Text("Take your choice") }, cancellationToken);
                 }
                 else
@@ -92,12 +92,11 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                     reply = MessageFactory.Attachment(new List<Attachment>());
                     int imageIndex = await GetImageIndex(stepContext);
                     Attachment attachment = GetBingImageAttachment(imageIndex);
-                    // reply.AttachmentLayout = AttachmentLayoutTypes.Carousel;
                     reply.Attachments.Add(attachment);
 
                     await stepContext.Context.SendActivityAsync(reply);
                     
-                    return await stepContext.ReplaceDialogAsync(nameof(BingChooserDialog), null, cancellationToken);
+                    return await stepContext.ReplaceDialogAsync(nameof(BingGuesserDialog), null, cancellationToken);
                 }
             }
         }
@@ -105,7 +104,7 @@ namespace Microsoft.BotBuilderSamples.Dialogs
         private async Task<DialogTurnResult> ActStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
             var command = stepContext.Result.ToString();
-            StorageService storageService = new StorageService(Configuration["DailyBingStorageConnectionString"]);
+            StorageService storageService = new StorageService(Configuration["DailyBingStorageConnectionString"], Configuration["DailyBingResultsContainer"]);
 
             if (command.ToLower().Contains("choose"))
             {
@@ -125,12 +124,38 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                 dailyBing.publishedTime = DateTime.Now;
                 await storageService.SaveDailyBing(dailyBing);
                 await stepContext.Context.SendActivityAsync(MessageFactory.Text("Thanks for choosing the image. Now it is time for everyone to start guessing!"), cancellationToken);
-                return await stepContext.ReplaceDialogAsync(nameof(BingChooserDialog), null, cancellationToken);
+                return await stepContext.ReplaceDialogAsync(nameof(BingGuesserDialog), null, cancellationToken);
                 // return await stepContext.BeginDialogAsync(nameof(BingChooserDialog), null, cancellationToken);
             }
             else if (command.ToLower().Contains("try another image"))
             {
                 int imageIndex = await IncrementAndReturnImageIndex();
+            }
+
+            else if (command.ToLower().Contains("switch to google"))
+            {
+                try
+                {
+                    var reply = MessageFactory.Attachment(new List<Attachment>());
+                    var attachment = await GetGoogleImageChoiceAttachment();
+                    await UpdateImageSource(ImageSource.Google);
+                    reply.Attachments.Add(attachment);
+                }
+                catch(Exception exp)
+                {
+                    Logger.LogError(exp, $"Could not set Google Image: {exp.Message} - {exp.StackTrace}", null);
+                    throw exp;
+                }
+            }
+            else if (command.ToLower().Contains("switch to bing"))
+            {
+
+                var reply = MessageFactory.Attachment(new List<Attachment>());
+                int imageIndex = await GetImageIndex(stepContext);
+                await UpdateImageSource(ImageSource.Bing);
+                var attachment = GetBingImageChoiceAttachment(imageIndex);
+                // reply.AttachmentLayout = AttachmentLayoutTypes.Carousel;
+                reply.Attachments.Add(attachment);
             }
             else
             {
@@ -210,7 +235,30 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                 Images = new List<CardImage> { new CardImage(image.Url) },
                 Buttons = new List<CardAction> {
                         new CardAction(ActionTypes.ImBack, "Choose image", value: "Choose image"),
-                        new CardAction(ActionTypes.ImBack, "Try another image", value: "Try another image")
+                        new CardAction(ActionTypes.ImBack, "Try another image", value: "Try another image"),
+                        new CardAction(ActionTypes.ImBack, "Switch to Google", value: "Switch to Google")
+                    }
+            };
+
+            return heroCard.ToAttachment();
+        }
+
+        private async Task<Attachment> GetGoogleImageChoiceAttachment()
+        {
+            GoogleMapService mapService = new GoogleMapService(Configuration["GoogleMapsAPI"]);
+            
+            DailyBingImage image = await mapService.GetRandomLocation();
+
+            var heroCard = new HeroCard
+            {
+                Title = "Today's Bing",
+                Subtitle = image.ImageRegion,
+                Text = "Click to choose the image for today or try another image.",
+                Images = new List<CardImage> { new CardImage(image.Url) },
+                Buttons = new List<CardAction> {
+                        new CardAction(ActionTypes.ImBack, "Choose image", value: "Choose image"),
+                        new CardAction(ActionTypes.ImBack, "Try another Google image", value: "Try another image"),
+                        new CardAction(ActionTypes.ImBack, "Switch to Bing", value: "Switch to Bing")
                     }
             };
 
@@ -232,14 +280,28 @@ namespace Microsoft.BotBuilderSamples.Dialogs
             return heroCard.ToAttachment();
         }
 
+        private async Task<DailyBingInfo> GetInfo(WaterfallStepContext context)
+        {
+            StorageService storageService = new StorageService(Configuration["DailyBingStorageConnectionString"], Configuration["DailyBingResultsContainer"]);
+            DailyBingInfo info = await storageService.GetLatestInfo();
+            return info;
+        }
+
         private async Task<int> GetImageIndex(WaterfallStepContext context)
         {
-            StorageService storageService = new StorageService(Configuration["DailyBingStorageConnectionString"]);
+            StorageService storageService = new StorageService(Configuration["DailyBingStorageConnectionString"], Configuration["DailyBingResultsContainer"]);
             DailyBingInfo info = await storageService.GetLatestInfo();
             return info.currentImageIndex;
         }
 
-    private async Task<DialogTurnResult> CommandStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
+        private async Task<ImageSource> GetImageSource(WaterfallStepContext context)
+        {
+            StorageService storageService = new StorageService(Configuration["DailyBingStorageConnectionString"], Configuration["DailyBingResultsContainer"]);
+            DailyBingInfo info = await storageService.GetLatestInfo();
+            return info.currentSource;
+        }
+
+        private async Task<DialogTurnResult> CommandStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
             stepContext.Values["command"] = stepContext.Result;
 
@@ -383,7 +445,7 @@ namespace Microsoft.BotBuilderSamples.Dialogs
 
         private async Task<int> IncrementAndReturnImageIndex()
         {
-            StorageService storageService = new StorageService(Configuration["DailyBingStorageConnectionString"]);
+            StorageService storageService = new StorageService(Configuration["DailyBingStorageConnectionString"], Configuration["DailyBingResultsContainer"]);
             DailyBingInfo info = await storageService.GetLatestInfo();
             info.currentImageIndex++;
 
@@ -397,5 +459,15 @@ namespace Microsoft.BotBuilderSamples.Dialogs
             return info.currentImageIndex;
         }
 
+        private async Task<ImageSource> UpdateImageSource(ImageSource imageSource)
+        {
+            StorageService storageService = new StorageService(Configuration["DailyBingStorageConnectionString"], Configuration["DailyBingResultsContainer"]);
+            DailyBingInfo info = await storageService.GetLatestInfo();
+            info.currentSource = imageSource;
+
+            await storageService.SaveLatestInfo(info);
+
+            return info.currentSource;
+        }
     }
 }

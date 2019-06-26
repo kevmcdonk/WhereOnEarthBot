@@ -7,7 +7,7 @@ namespace DailyBingChallengeBot.Models
     public enum ImageSource
     {
         Bing,
-        GeoGuesser
+        Google
     }
 
     public class DailyBingInfo

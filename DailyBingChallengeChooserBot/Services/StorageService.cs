@@ -14,7 +14,7 @@ namespace DailyBingChallengeBot.Services
         private CloudStorageAccount storageAccount;
         private CloudBlobContainer cloudBlobContainer;
 
-        public StorageService(string ConnectionString)
+        public StorageService(string ConnectionString, string containerName)
         {
             // Check whether the connection string can be parsed.
             
@@ -23,7 +23,7 @@ namespace DailyBingChallengeBot.Services
                 // Create the CloudBlobClient that represents the Blob storage endpoint for the storage account.
                 CloudBlobClient cloudBlobClient = storageAccount.CreateCloudBlobClient();
 
-                cloudBlobContainer = cloudBlobClient.GetContainerReference("dailybingdata");
+                cloudBlobContainer = cloudBlobClient.GetContainerReference(containerName);
             }
             else
             {
