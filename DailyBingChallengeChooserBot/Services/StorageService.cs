@@ -96,6 +96,37 @@ namespace DailyBingChallengeBot.Services
             await SaveBlob(dailyBing, blobName);
         }
 
+        public async Task SaveDailyBingImage(DailyBingImage image)
+        {
+            string blobName = "dailybingImage" + DateTime.Now.ToString("yyyyMMdd") + ".json";
+            await SaveBlob(image, blobName);
+        }
+
+        public async Task<DailyBingImage> getDailyBingImage()
+        {
+            string blobName = "dailybingImage" + DateTime.Now.ToString("yyyyMMdd") + ".json";
+            
+            try
+            {
+                string blobText = await GetBlobContents(blobName);
+                DailyBingImage dailyBingImage = JsonConvert.DeserializeObject<DailyBingImage>(blobText);
+                return dailyBingImage;
+            }
+            catch (Exception exp)
+            {
+                if (exp.Message == "Blob does not exist")
+                {
+                    DailyBingImage newDailyBingImage = new DailyBingImage()
+                    {
+
+                    };
+                    await SaveBlob(newDailyBingImage, blobName);
+                    return newDailyBingImage;
+                }
+                throw exp;
+            }
+        }
+
         public async Task SaveLatestInfo(DailyBingInfo info)
         {
             if (info.users == null)

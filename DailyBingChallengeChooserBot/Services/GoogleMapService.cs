@@ -29,8 +29,6 @@ namespace DailyBingChallengeBot.Services
 
         public async Task<DailyBingImage> GetRandomLocation()
         {
-            try
-            {
                 Random rnd = new Random();
                 double latitude = rnd.Next(-70000, 70000);
                 latitude = latitude / 1000;
@@ -38,6 +36,11 @@ namespace DailyBingChallengeBot.Services
                 longitude = longitude / 1000;
 
                 MapResponse placesResponse = await this.SearchPlaces(latitude, longitude);
+                
+                if(placesResponse.Status == "OVER_QUERY_LIMIT")
+                {
+                    throw new Exception("Over Google query limit");
+                }
 
                 int iterationCount = 0;
                 int maxCount = 50;
@@ -80,14 +83,6 @@ namespace DailyBingChallengeBot.Services
                 };
 
                 return image;
-
-                throw new Exception("Location  not found");
-            }
-            catch (Exception exp)
-            {
-                Console.WriteLine("Grrr error: " + exp.Message);
-                return null;
-            }
         }
 
         /// <summary>

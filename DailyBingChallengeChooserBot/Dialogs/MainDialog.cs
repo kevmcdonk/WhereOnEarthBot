@@ -21,6 +21,7 @@ namespace Microsoft.BotBuilderSamples.Dialogs
     {
         protected readonly IConfiguration Configuration;
         protected readonly ILogger Logger;
+        private StorageService storageService;
 
         public MainDialog(IConfiguration configuration, ILogger<MainDialog> logger)
             : base(nameof(MainDialog), configuration["ConnectionName"])
@@ -49,6 +50,8 @@ namespace Microsoft.BotBuilderSamples.Dialogs
 
             // The initial child Dialog to run.
             InitialDialogId = nameof(WaterfallDialog);
+
+            storageService = new StorageService(Configuration["DailyBingStorageConnectionString"], Configuration["DailyBingResultsContainer"]);
         }
 
         private async Task<DialogTurnResult> IntroStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
@@ -63,7 +66,7 @@ namespace Microsoft.BotBuilderSamples.Dialogs
             else
             {
                 IMessageActivity reply = null;
-                StorageService storageService = new StorageService(Configuration["DailyBingStorageConnectionString"], Configuration["DailyBingResultsContainer"]);
+
                 DailyBing dailyBing = await storageService.GetDailyBing();
                 if (dailyBing.photoUrl == null)
                 {
@@ -79,7 +82,7 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                     else
                     {
                         int imageIndex = info.currentImageIndex;
-                        attachment = GetBingImageChoiceAttachment(imageIndex);
+                        attachment = await GetBingImageChoiceAttachment(imageIndex);
                     }
 
                     reply.Attachments.Add(attachment);
@@ -91,7 +94,7 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                     await stepContext.Context.SendActivityAsync(MessageFactory.Text("Today's image has already been chosen so you can make your guesses now."), cancellationToken);
                     reply = MessageFactory.Attachment(new List<Attachment>());
                     int imageIndex = await GetImageIndex(stepContext);
-                    Attachment attachment = GetBingImageAttachment(imageIndex);
+                    Attachment attachment = await GetDailyBingImageAttachment();
                     reply.Attachments.Add(attachment);
 
                     await stepContext.Context.SendActivityAsync(reply);
@@ -104,13 +107,12 @@ namespace Microsoft.BotBuilderSamples.Dialogs
         private async Task<DialogTurnResult> ActStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
             var command = stepContext.Result.ToString();
-            StorageService storageService = new StorageService(Configuration["DailyBingStorageConnectionString"], Configuration["DailyBingResultsContainer"]);
 
             if (command.ToLower().Contains("choose"))
             {
                 int imageIndex = await GetImageIndex(stepContext);
                 BingImageService imageService = new BingImageService();
-                DailyBingImage image = imageService.GetBingImageUrl(imageIndex);
+                DailyBingImage image = await storageService.getDailyBingImage();
                 BingMapService mapService = new BingMapService();
                 DailyBingEntry bingEntry = await mapService.GetLocationDetails(image.ImageText);
                 var dailyBing = await storageService.GetDailyBing();
@@ -153,7 +155,7 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                 var reply = MessageFactory.Attachment(new List<Attachment>());
                 int imageIndex = await GetImageIndex(stepContext);
                 await UpdateImageSource(ImageSource.Bing);
-                var attachment = GetBingImageChoiceAttachment(imageIndex);
+                var attachment = await GetBingImageChoiceAttachment(imageIndex);
                 // reply.AttachmentLayout = AttachmentLayoutTypes.Carousel;
                 reply.Attachments.Add(attachment);
             }
@@ -188,44 +190,11 @@ namespace Microsoft.BotBuilderSamples.Dialogs
             return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
         }
 
-
-        private async Task<DialogTurnResult> PromptStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
-        {
-            return await stepContext.BeginDialogAsync(nameof(OAuthPrompt), null, cancellationToken);
-        }
-
-        private async Task<DialogTurnResult> LoginStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
-        {
-            // Get the token from the previous step. Note that we could also have gotten the
-            // token directly from the prompt itself. There is an example of this in the next method.
-            var tokenResponse = (TokenResponse)stepContext.Result;
-            if (tokenResponse != null)
-            {
-                await stepContext.Context.SendActivityAsync(MessageFactory.Text("You are now logged in."), cancellationToken);
-                // return await stepContext.PromptAsync(nameof(TextPrompt), new PromptOptions { Prompt = MessageFactory.Text("Would you like to do? (type 'me', 'send <EMAIL>' or 'recent')") }, cancellationToken);
-
-                IMessageActivity reply = null;
-
-                reply = MessageFactory.Attachment(new List<Attachment>());
-                int imageIndex = await GetImageIndex(stepContext);
-                Attachment attachment = GetBingImageChoiceAttachment(imageIndex);
-                // reply.AttachmentLayout = AttachmentLayoutTypes.Carousel;
-                reply.Attachments.Add(attachment);
-
-                await stepContext.Context.SendActivityAsync(reply);
-                //TODO: Replace with ChopicePrompt?
-                return await stepContext.PromptAsync(nameof(TextPrompt), new PromptOptions { Prompt = MessageFactory.Text("Take your choice") }, cancellationToken);
-            }
-            else
-            {
-                await stepContext.Context.SendActivityAsync(MessageFactory.Text("Login was not successful please try again."), cancellationToken);
-            }
-            return await stepContext.EndDialogAsync();
-        }
-        private Attachment GetBingImageChoiceAttachment(int imageIndex)
+        private async Task<Attachment> GetBingImageChoiceAttachment(int imageIndex)
         {
             BingImageService imageService = new BingImageService();
             DailyBingImage image = imageService.GetBingImageUrl(imageIndex);
+            await storageService.SaveDailyBingImage(image);
 
             var heroCard = new HeroCard
             {
@@ -246,29 +215,68 @@ namespace Microsoft.BotBuilderSamples.Dialogs
         private async Task<Attachment> GetGoogleImageChoiceAttachment()
         {
             GoogleMapService mapService = new GoogleMapService(Configuration["GoogleMapsAPI"]);
-            
-            DailyBingImage image = await mapService.GetRandomLocation();
+            HeroCard heroCard = null;
 
-            var heroCard = new HeroCard
+            try
             {
-                Title = "Today's Bing",
-                Subtitle = image.ImageRegion,
-                Text = "Click to choose the image for today or try another image.",
-                Images = new List<CardImage> { new CardImage(image.Url) },
-                Buttons = new List<CardAction> {
+
+
+                DailyBingImage image = await mapService.GetRandomLocation();
+                await storageService.SaveDailyBingImage(image);
+
+                heroCard = new HeroCard
+                {
+                    Title = "Today's Bing",
+                    Subtitle = image.ImageRegion,
+                    Text = "Click to choose the image for today or try another image.",
+                    Images = new List<CardImage> { new CardImage(image.Url) },
+                    Buttons = new List<CardAction> {
                         new CardAction(ActionTypes.ImBack, "Choose image", value: "Choose image"),
                         new CardAction(ActionTypes.ImBack, "Try another Google image", value: "Try another image"),
                         new CardAction(ActionTypes.ImBack, "Switch to Bing", value: "Switch to Bing")
                     }
-            };
+                };
+            }
+            catch(Exception exp)
+            {
+                if (exp.Message == "Sorry, couldn't find a suitable image. Try again shortly.")
+                {
+                    heroCard = new HeroCard
+                    {
+                        Title = "Today's Bing",
+                        Subtitle = "Not found",
+                        Text = "After trying 50 different locations, Google couldn't find a suitable image.",
+                        Buttons = new List<CardAction> {
+                        new CardAction(ActionTypes.ImBack, "Try another Google image", value: "Try another image"),
+                        new CardAction(ActionTypes.ImBack, "Switch to Bing", value: "Switch to Bing")
+                    }
+                    };
+                }
+                else if (exp.Message == "Over Google query limit")
+                {
+                    heroCard = new HeroCard
+                    {
+                        Title = "Today's Bing",
+                        Subtitle = "Not found",
+                        Text = "The Google Maps Search Service is on a low level and has exceeeded it's usage. Please wait a few minutes and try again or switch to Bing.",
+                        Buttons = new List<CardAction> {
+                        new CardAction(ActionTypes.ImBack, "Try another Google image", value: "Try another image"),
+                        new CardAction(ActionTypes.ImBack, "Switch to Bing", value: "Switch to Bing")
+                    }
+                    };
+                }
+                else
+                {
+                    throw exp;
+                }
+            }
 
             return heroCard.ToAttachment();
         }
 
-        private Attachment GetBingImageAttachment(int imageIndex)
+        private async Task<Attachment> GetDailyBingImageAttachment()
         {
-            BingImageService imageService = new BingImageService();
-            DailyBingImage image = imageService.GetBingImageUrl(imageIndex);
+            DailyBingImage image = await storageService.getDailyBingImage();
 
             var heroCard = new HeroCard
             {
@@ -282,21 +290,18 @@ namespace Microsoft.BotBuilderSamples.Dialogs
 
         private async Task<DailyBingInfo> GetInfo(WaterfallStepContext context)
         {
-            StorageService storageService = new StorageService(Configuration["DailyBingStorageConnectionString"], Configuration["DailyBingResultsContainer"]);
             DailyBingInfo info = await storageService.GetLatestInfo();
             return info;
         }
 
         private async Task<int> GetImageIndex(WaterfallStepContext context)
         {
-            StorageService storageService = new StorageService(Configuration["DailyBingStorageConnectionString"], Configuration["DailyBingResultsContainer"]);
             DailyBingInfo info = await storageService.GetLatestInfo();
             return info.currentImageIndex;
         }
 
         private async Task<ImageSource> GetImageSource(WaterfallStepContext context)
         {
-            StorageService storageService = new StorageService(Configuration["DailyBingStorageConnectionString"], Configuration["DailyBingResultsContainer"]);
             DailyBingInfo info = await storageService.GetLatestInfo();
             return info.currentSource;
         }
@@ -316,136 +321,8 @@ namespace Microsoft.BotBuilderSamples.Dialogs
             return await stepContext.BeginDialogAsync(nameof(OAuthPrompt), null, cancellationToken);
         }
 
-        private async Task<DialogTurnResult> ProcessStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
-        {
-            if (stepContext.Result != null)
-            {
-                // We do not need to store the token in the bot. When we need the token we can
-                // send another prompt. If the token is valid the user will not need to log back in.
-                // The token will be available in the Result property of the task.
-                var tokenResponse = stepContext.Result as TokenResponse;
-
-                // If we have the token use the user is authenticated so we may use it to make API calls.
-                if (tokenResponse?.Token != null)
-                {
-                    var command = ((string)stepContext.Values["command"] ?? string.Empty).ToLowerInvariant();
-                    
-                    if (command.ToLower().Contains("choose"))
-                    {
-                        
-                        GraphService graphService = new GraphService(Configuration["DailyBingSiteId"], Configuration["DailyBingEntryListId"], Configuration["DailyBingUserListId"], Configuration["DailyBingsListId"]);
-                        var accessToken = tokenResponse?.Token;
-
-                        int imageIndex = await GetImageIndex(stepContext);
-                        BingImageService imageService = new BingImageService();
-                        DailyBingImage image = imageService.GetBingImageUrl(imageIndex);
-                        BingMapService mapService = new BingMapService();
-                        DailyBingEntry bingEntry = await mapService.GetLocationDetails(image.ImageText);
-
-                        await graphService.SaveDailyBing(accessToken, image.ImageText, DateTime.Now, image.Url, bingEntry.BingResponse, bingEntry.latitude.ToString(), bingEntry.longitude.ToString());
-                        /*StateClient stateClient = context.Activity.GetStateClient();
-                        var userData = stateClient.BotState.GetUserData(context.Activity.ChannelId, context.Activity.From.Id);
-                        userData.SetProperty<DailyBingEntry>("CurrentDailyBing", bingEntry);
-                        stateClient.BotState.SetUserData(context.Activity.ChannelId, context.Activity.From.Id, userData);
-                        */
-                        return await stepContext.PromptAsync(nameof(TextPrompt), new PromptOptions { Prompt = MessageFactory.Text("Thanks for choosing the image. Now it is time for everyone to start guessing!") }, cancellationToken);
-                    }
-                    else if (command.ToLower().Contains("try another image"))
-                    {
-                        
-                        var reply = MessageFactory.Attachment(new List<Attachment>());
-                        int imageIndex = await IncrementAndReturnImageIndex();
-                        var attachment = GetBingImageChoiceAttachment(imageIndex);
-                        // reply.AttachmentLayout = AttachmentLayoutTypes.Carousel;
-                        reply.Attachments.Add(attachment);
-                    }
-                    else
-                    {
-                        await stepContext.Context.SendActivityAsync(MessageFactory.Text("Sorry, not sure about that"), cancellationToken);
-                    }
-                }
-
-                /*
-                 *  var message = await result;
-
-            if (message.Text.ToLower().Contains("choose image"))
-            {
-                GraphService graphService = new GraphService();
-                var accessToken = await context.GetAccessToken();
-
-                int imageIndex = GetImageIndex(context);
-                BingImageService imageService = new BingImageService();
-                DailyBingImage image = imageService.GetBingImageUrl(imageIndex);
-                BingMapService mapService = new BingMapService();
-                DailyBingEntry bingEntry = await mapService.GetLocationDetails(image.ImageText);
-
-                await graphService.SaveDailyBing(accessToken, image.ImageText, DateTime.Now, image.Url, bingEntry.BingResponse, bingEntry.latitude.ToString(), bingEntry.longitude.ToString());
-                StateClient stateClient = context.Activity.GetStateClient();
-                var userData = stateClient.BotState.GetUserData(context.Activity.ChannelId, context.Activity.From.Id);
-                userData.SetProperty<DailyBingEntry>("CurrentDailyBing", bingEntry);
-                stateClient.BotState.SetUserData(context.Activity.ChannelId, context.Activity.From.Id, userData);
-                await context.PostAsync("Thanks for choosing the image. Now it is time to start guessing everyone!");
-                await context.Forward(new BingBotDialog(), null, message, CancellationToken.None);
-            }
-            else if (message.Text.ToLower().Contains("try another image"))
-            {
-                var reply = context.MakeMessage();
-                int imageIndex = IncrementAndReturnImageIndex(context);
-                Attachment attachment = GetBingImageAttachment(imageIndex, context);
-                reply.Attachments.Add(attachment);
-
-                await context.PostAsync(reply);
-                context.Wait(this.OnOptionSelected);
-            }
-            else
-            {
-                //send image again
-                await context.PostAsync("Sorry, not sure about that");
-                context.Wait(MessageReceivedAsync);
-            }
-            */
-            }
-            else
-            {
-                await stepContext.Context.SendActivityAsync(MessageFactory.Text("We couldn't log you in. Please try again later."), cancellationToken);
-            }
-
-            return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
-        }
-
-        private async Task<DialogTurnResult> ProcessResponsesAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
-        {
-            if (stepContext.Result != null)
-            {
-                // We do not need to store the token in the bot. When we need the token we can
-                // send another prompt. If the token is valid the user will not need to log back in.
-                // The token will be available in the Result property of the task.
-                var tokenResponse = stepContext.Result as TokenResponse;
-
-                // If we have the token use the user is authenticated so we may use it to make API calls.
-                if (tokenResponse?.Token != null)
-                {
-                    //TODO: Log response by user
-                    //TODO: Check if all users have replied or if it's late
-                    //TODO: Check for someone saying process results
-                    //TODO: Process results and reply with winner
-
-                    return await stepContext.PromptAsync(nameof(TextPrompt), new PromptOptions { Prompt = MessageFactory.Text("Thanks, just need to get everyone's answers. If you are sure that's the end, reply 'all done' - I'll trust you") }, cancellationToken);
-                    // await stepContext.Context.SendActivityAsync(MessageFactory.Text("Sorry, not sure about that"), cancellationToken);
-
-                }
-            }
-            else
-            {
-                await stepContext.Context.SendActivityAsync(MessageFactory.Text("We couldn't log you in. Please try again later."), cancellationToken);
-            }
-
-            return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
-        }
-
         private async Task<int> IncrementAndReturnImageIndex()
         {
-            StorageService storageService = new StorageService(Configuration["DailyBingStorageConnectionString"], Configuration["DailyBingResultsContainer"]);
             DailyBingInfo info = await storageService.GetLatestInfo();
             info.currentImageIndex++;
 
@@ -461,13 +338,19 @@ namespace Microsoft.BotBuilderSamples.Dialogs
 
         private async Task<ImageSource> UpdateImageSource(ImageSource imageSource)
         {
-            StorageService storageService = new StorageService(Configuration["DailyBingStorageConnectionString"], Configuration["DailyBingResultsContainer"]);
             DailyBingInfo info = await storageService.GetLatestInfo();
             info.currentSource = imageSource;
 
             await storageService.SaveLatestInfo(info);
 
             return info.currentSource;
+        }
+
+        private async Task UpdateDailyBingImage(DailyBingImage image)
+        {            
+            await storageService.SaveDailyBingImage(image);
+
+            return;
         }
     }
 }
