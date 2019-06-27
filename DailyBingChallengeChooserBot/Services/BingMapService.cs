@@ -10,9 +10,11 @@ namespace DailyBingChallengeBot.Services
 {
     public class BingMapService
     {
-        public BingMapService()
-        {
+        public string BingMapsKey;
 
+        public BingMapService(string bingMapsKey)
+        {
+            BingMapsKey = bingMapsKey;
         }
 
         public async Task<DailyBingEntry> GetLocationDetails(string locationQueryText)
@@ -26,7 +28,7 @@ namespace DailyBingChallengeBot.Services
                     IncludeIso2 = true,
                     IncludeNeighborhood = true,
                     MaxResults = 25,
-                    BingMapsKey = "AjQL04u0nEUDufa0hQ_n2OKEjAKQOQYdOYcryj1B6F8oo5idwfzu8v3InJ6L1_FR"
+                    BingMapsKey = BingMapsKey
                 };
 
                 //Process the request by using the ServiceManager.

@@ -54,14 +54,21 @@ namespace Microsoft.BotBuilderSamples.Bots
 
         public override async Task OnTurnAsync(ITurnContext turnContext, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (turnContext?.Activity?.Type == ActivityTypes.Invoke && turnContext.Activity.ChannelId == "msteams")
-                await Dialog.Run(turnContext, ConversationState.CreateProperty<DialogState>(nameof(DialogState)), cancellationToken);
-            else
-                await base.OnTurnAsync(turnContext, cancellationToken);
+            try
+            {
+                if (turnContext?.Activity?.Type == ActivityTypes.Invoke && turnContext.Activity.ChannelId == "msteams")
+                    await Dialog.Run(turnContext, ConversationState.CreateProperty<DialogState>(nameof(DialogState)), cancellationToken);
+                else
+                    await base.OnTurnAsync(turnContext, cancellationToken);
 
-            // Save any state changes that might have occured during the turn.
-            await ConversationState.SaveChangesAsync(turnContext, false, cancellationToken);
-            await UserState.SaveChangesAsync(turnContext, false, cancellationToken);
+                // Save any state changes that might have occured during the turn.
+                await ConversationState.SaveChangesAsync(turnContext, false, cancellationToken);
+                await UserState.SaveChangesAsync(turnContext, false, cancellationToken);
+            }
+            catch(System.Exception exp)
+            {
+                Logger.LogError(exp, $"Error setting up turn: {exp.Message} - { exp.StackTrace}", null);
+            }
         }
 
         

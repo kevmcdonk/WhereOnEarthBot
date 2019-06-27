@@ -65,7 +65,7 @@ namespace Microsoft.BotBuilderSamples.Dialogs
 
         private async Task<DialogTurnResult> ActStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
-            BingMapService mapService = new BingMapService();
+            BingMapService mapService = new BingMapService(Configuration["BingMapsAPI"]);
 
             string guessText = stepContext.Result.ToString();
             DailyBingEntry entry = await mapService.GetLocationDetails(guessText);

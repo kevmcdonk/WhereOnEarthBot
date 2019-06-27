@@ -113,7 +113,7 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                 int imageIndex = await GetImageIndex(stepContext);
                 BingImageService imageService = new BingImageService();
                 DailyBingImage image = await storageService.getDailyBingImage();
-                BingMapService mapService = new BingMapService();
+                BingMapService mapService = new BingMapService(Configuration["BingMapsAPI"]);
                 DailyBingEntry bingEntry = await mapService.GetLocationDetails(image.ImageText);
                 var dailyBing = await storageService.GetDailyBing();
 

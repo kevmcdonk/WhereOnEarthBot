@@ -5,6 +5,6 @@
   </PropertyGroup>
   <PropertyGroup>
     <ActiveDebugProfile>IIS Express</ActiveDebugProfile>
-    <NameOfLastUsedPublishProfile>dailybingchallengebot - Web Deploy</NameOfLastUsedPublishProfile>
+    <NameOfLastUsedPublishProfile>dailybingchallengebotdemo - Web Deploy</NameOfLastUsedPublishProfile>
   </PropertyGroup>
 </Project>
