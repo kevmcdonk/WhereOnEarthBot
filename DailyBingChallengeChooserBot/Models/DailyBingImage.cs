@@ -1,11 +1,12 @@
-﻿using System;
+﻿using Microsoft.Azure.Cosmos.Table;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 
 namespace DailyBingChallengeBot.Models
 {
-    public class DailyBingImage
+    public class DailyBingImage : TableEntity
     {
         public string Url { get; set; }
         public string ImageText { get; set; }

@@ -16,8 +16,7 @@ using DailyBingChallengeBot.Services;
 using System.Collections.Generic;
 using Microsoft.Bot.Connector;
 using Microsoft.Bot.Connector.Teams.Models;
-using System.Text;
-using Microsoft.Bot.Builder.ApplicationInsights;
+using DailyBingChallengeBot.Helpers;
 
 namespace Microsoft.BotBuilderSamples.Dialogs
 {
@@ -25,6 +24,7 @@ namespace Microsoft.BotBuilderSamples.Dialogs
     {
         protected readonly IConfiguration Configuration;
         protected readonly ILogger Logger;
+        private TableService tableService;
 
         public BingGuesserDialog(string id, IConfiguration configuration, ILogger logger)
             : base(id)
@@ -32,7 +32,8 @@ namespace Microsoft.BotBuilderSamples.Dialogs
         {
             Configuration = configuration;
             Logger = logger;
-            
+            tableService = new TableService(Configuration["DailyBingTableConnectionString"], Configuration["DailyBingTableName"]);
+
             AddDialog(new TextPrompt(nameof(TextPrompt)));
             AddDialog(new WaterfallDialog(nameof(WaterfallDialog), new WaterfallStep[]
             {
@@ -47,9 +48,8 @@ namespace Microsoft.BotBuilderSamples.Dialogs
 
         private async Task<DialogTurnResult> IntroStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
-            StorageService storageService = new StorageService(Configuration["DailyBingStorageConnectionString"], Configuration["DailyBingResultsContainer"]);
-            DailyBing dailyBing = await storageService.GetDailyBing();
-            DailyBingInfo info = await storageService.GetLatestInfo();
+            DailyBing dailyBing = await tableService.GetDailyBing();
+            DailyBingInfo info = await tableService.GetLatestInfo();
             bool allresultsreceived = await CheckWhetherAllEntriesReceived(stepContext, cancellationToken, dailyBing, info);
 
             if (allresultsreceived)
@@ -68,46 +68,44 @@ namespace Microsoft.BotBuilderSamples.Dialogs
             BingMapService mapService = new BingMapService(Configuration["BingMapsAPI"]);
 
             string guessText = stepContext.Result.ToString();
-            DailyBingEntry entry = await mapService.GetLocationDetails(guessText);
-            if (entry == null)
+            if (guessText.ToLower().Contains("check results"))
             {
-                var locationSplit = stepContext.Result.ToString().Split(' ');
-                if (locationSplit.Length > 1)
-                {
-                    var searchText = guessText.Substring(guessText.IndexOf(' '));
-                    entry = await mapService.GetLocationDetails(searchText);
-                }
-            }
-
-            if (entry == null)
-            {
-                await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Sorry, bing maps couldn't identify the location '{stepContext.Result.ToString()}'. Please try again."), cancellationToken);
-                return await stepContext.BeginDialogAsync(nameof(BingGuesserDialog), null, cancellationToken);
+                DailyBing dailyBing = await tableService.GetDailyBing();
+                DailyBingInfo info = await tableService.GetLatestInfo();
+                await CheckResults(stepContext, cancellationToken, dailyBing, info);
+                return await stepContext.EndDialogAsync(cancellationToken);
             }
             else
             {
-                StorageService storageService = new StorageService(Configuration["DailyBingStorageConnectionString"], Configuration["DailyBingResultsContainer"]);
-                DailyBing dailyBing = await storageService.GetDailyBing();
-
-
-                double distanceFromResult = (Math.Pow(entry.longitude - dailyBing.longitude, 2) + Math.Pow(entry.latitude - dailyBing.latitude, 2));
-                entry.distanceFrom = distanceFromResult;
-                entry.userName = stepContext.Context.Activity.From.Name;
-                entry.userId = stepContext.Context.Activity.From.Id;
-                dailyBing.entries.Add(entry);
-                await storageService.SaveDailyBing(dailyBing);
-                await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Saving your guess as {entry.BingResponse}"), cancellationToken);
-                DailyBingInfo info = await storageService.GetLatestInfo();
-                bool allresultsreceived = await CheckWhetherAllEntriesReceived(stepContext, cancellationToken, dailyBing, info);
-
-                if (allresultsreceived)
+                DailyBingEntry entry = await mapService.GetLocationDetails(guessText);
+                if (entry == null)
                 {
-                    await CheckResults(stepContext, cancellationToken, dailyBing, info);
-                    return await stepContext.EndDialogAsync(cancellationToken);
+                    var locationSplit = stepContext.Result.ToString().Split(' ');
+                    if (locationSplit.Length > 1)
+                    {
+                        var searchText = guessText.Substring(guessText.IndexOf(' '));
+                        entry = await mapService.GetLocationDetails(searchText);
+                    }
+                }
+
+                if (entry == null)
+                {
+                    await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Sorry, bing maps couldn't identify the location '{stepContext.Result.ToString()}'. Please try again."), cancellationToken);
+                    return await stepContext.BeginDialogAsync(nameof(BingGuesserDialog), null, cancellationToken);
                 }
                 else
                 {
-                    await stepContext.Context.SendActivityAsync(MessageFactory.Text("Still more results from users to come."), cancellationToken);
+                    DailyBing dailyBing = await tableService.GetDailyBing();
+
+                    double distanceFromResult = (Math.Pow(entry.longitude - dailyBing.longitude, 2) + Math.Pow(entry.latitude - dailyBing.latitude, 2));
+                    entry.distanceFrom = distanceFromResult;
+                    entry.userName = stepContext.Context.Activity.From.Name;
+                    entry.userId = stepContext.Context.Activity.From.Id;
+                    dailyBing.entries.Add(entry);
+                    await tableService.SaveDailyBing(dailyBing);
+                    await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Saving your guess as {entry.BingResponse}"), cancellationToken);
+                    DailyBingInfo info = await tableService.GetLatestInfo();
+
                     return await stepContext.BeginDialogAsync(nameof(BingGuesserDialog), null, cancellationToken);
                 }
             }
@@ -154,12 +152,14 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                         usersWithEntryCount++;
                     }
                 }
-                await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Still more results from users to come - {usersWithEntryCount} users have entered out of the {userCount} in this channel."), cancellationToken);
-
+                
                 if (usersWithEntryCount >= userCount)
                 {
                     return true;
                 }
+
+                await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Still more results from users to come - {usersWithEntryCount} users have entered out of the {userCount} in this channel."), cancellationToken);
+
 
                 //TODO: remove this for a user
                 if (todayEntries.Count > userCount)
@@ -182,6 +182,7 @@ namespace Microsoft.BotBuilderSamples.Dialogs
             string currentWinningUser = "";
             string currentWinningEntry = "";
             double currentWinningDistance = double.MaxValue;
+           
 
             foreach (var entry in todayEntries)
             {
@@ -194,7 +195,18 @@ namespace Microsoft.BotBuilderSamples.Dialogs
             }
             try
             {
-                await stepContext.Context.SendActivityAsync(MessageFactory.Text($"The winning result was {currentWinningEntry} from {currentWinningUser.ToString()} which was {currentWinningDistance.ToString("#.##")} km from the real answer of {dailyBing.extractedLocation}"), cancellationToken);
+                DailyBingImage image = await tableService.getDailyBingImage();
+
+                dailyBing.distanceToEntry = currentWinningDistance;
+                dailyBing.winnerName = currentWinningUser;
+                dailyBing.winnerGuess = currentWinningEntry;
+                dailyBing.resultSet = true;
+
+                await tableService.SaveDailyBing(dailyBing);
+                IMessageActivity reply = MessageFactory.Attachment(new List<Attachment>());
+                
+                reply.Attachments.Add(AttachmentHelper.ResultCardAttachment(currentWinningUser.ToString(), image.Url, currentWinningEntry, currentWinningDistance.ToString("#.##"), dailyBing.extractedLocation, dailyBing.text));
+                await stepContext.Context.SendActivityAsync(reply);
             }
             catch (Exception exp)
             {
@@ -209,3 +221,4 @@ namespace Microsoft.BotBuilderSamples.Dialogs
         }
     }
 }
+
