@@ -69,6 +69,10 @@ namespace DailyBingChallengeBot.Services
             {
                 dailyBing.publishedTime = DateTime.Now;
             }
+            if (dailyBing.serializableCurrentStatus != null)
+            {
+                dailyBing.currentStatus = (DailyBingStatus)Enum.Parse(typeof(DailyBingStatus), dailyBing.serializableCurrentStatus);
+            }
             return dailyBing;
         }
 
@@ -85,6 +89,7 @@ namespace DailyBingChallengeBot.Services
                 dailyBing.publishedTime = DateTime.Now;
             }
             dailyBing.SerializedEntries = JsonConvert.SerializeObject(dailyBing.entries);
+            dailyBing.serializableCurrentStatus = dailyBing.currentStatus.ToString();
             TableOperation insertOrMergeOperation = TableOperation.InsertOrMerge(dailyBing);
 
             // Execute the operation.

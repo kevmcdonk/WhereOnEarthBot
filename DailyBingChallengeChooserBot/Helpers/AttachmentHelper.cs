@@ -25,5 +25,22 @@ namespace DailyBingChallengeBot.Helpers
             return attachment;
 
         }
+
+        public static Attachment AwaitingGuesses(int userCount, string imageUrl, int usersWithEntryCount)
+        {
+            var heroCard = new HeroCard
+            {
+                Title = "The image has been chosen",
+                Subtitle = $"But we are still waiting on guesses",
+                Text = $"Still more results from users to come - {usersWithEntryCount} users have entered out of the {userCount} in this channel.",
+                Images = new List<CardImage> { new CardImage(imageUrl) }
+            };
+
+            IMessageActivity reply = MessageFactory.Attachment(new List<Attachment>());
+
+            Microsoft.Bot.Schema.Attachment attachment = heroCard.ToAttachment();
+            return attachment;
+
+        }
     }
 }

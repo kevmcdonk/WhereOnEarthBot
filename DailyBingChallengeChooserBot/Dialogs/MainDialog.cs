@@ -87,21 +87,12 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                     }
 
                     reply.Attachments.Add(attachment);
-                    await stepContext.Context.SendActivityAsync(reply);
-                    return await stepContext.PromptAsync(nameof(TextPrompt), new PromptOptions { Prompt = MessageFactory.Text("Take your choice") }, cancellationToken);
+                    return await stepContext.PromptAsync(nameof(TextPrompt), new PromptOptions { Prompt = (Activity)reply }, cancellationToken);
                 }
                 else
                 {
                     if (!dailyBing.resultSet)
                     {
-                        await stepContext.Context.SendActivityAsync(MessageFactory.Text("Today's image has already been chosen so you can make your guesses now."), cancellationToken);
-                        reply = MessageFactory.Attachment(new List<Attachment>());
-                        int imageIndex = await GetImageIndex(stepContext);
-                        Attachment attachment = await GetDailyBingImageAttachment();
-                        reply.Attachments.Add(attachment);
-
-                        await stepContext.Context.SendActivityAsync(reply);
-
                         return await stepContext.ReplaceDialogAsync(nameof(BingGuesserDialog), null, cancellationToken);
                     }
                     else
@@ -136,8 +127,8 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                 dailyBing.extractedLocation = bingEntry.BingResponse;
                 dailyBing.entries = new List<DailyBingEntry>();
                 dailyBing.publishedTime = DateTime.Now;
+                dailyBing.currentStatus = DailyBingStatus.Guessing;
                 await tableService.SaveDailyBing(dailyBing);
-                await stepContext.Context.SendActivityAsync(MessageFactory.Text("Thanks for choosing the image. Now it is time for everyone to start guessing!"), cancellationToken);
                 return await stepContext.ReplaceDialogAsync(nameof(BingGuesserDialog), null, cancellationToken);
                 // return await stepContext.BeginDialogAsync(nameof(BingChooserDialog), null, cancellationToken);
             }

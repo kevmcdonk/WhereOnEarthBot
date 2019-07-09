@@ -6,6 +6,13 @@ using System.Web;
 
 namespace DailyBingChallengeBot.Models
 {
+    public enum DailyBingStatus
+    {
+        NotSet,
+        Guessing,
+        Completed
+    }
+
     public class DailyBing : CustomSerializationTableEntity
     {
         public string id { get; set; }
@@ -23,7 +30,8 @@ namespace DailyBingChallengeBot.Models
         public string winnerGuess { get; set; }
         public string winnerName { get; set; }
         public double distanceToEntry { get; set; }
-
+        public DailyBingStatus currentStatus { get; set; }
+        public string serializableCurrentStatus { get; set; }
         public override string ToString()
         {
             return this.text;

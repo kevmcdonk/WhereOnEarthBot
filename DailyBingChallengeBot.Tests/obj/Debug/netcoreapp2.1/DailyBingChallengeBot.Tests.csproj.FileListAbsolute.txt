@@ -11,3 +11,4 @@ C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\obj\De
 C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\obj\Debug\netcoreapp2.1\DailyBingChallengeBot.Tests.AssemblyInfo.cs
 C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\obj\Debug\netcoreapp2.1\DailyBingChallengeBot.Tests.dll
 C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\obj\Debug\netcoreapp2.1\DailyBingChallengeBot.Tests.pdb
+C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\obj\Debug\netcoreapp2.1\DailyBingChallengeBot.Tests.csprojAssemblyReference.cache

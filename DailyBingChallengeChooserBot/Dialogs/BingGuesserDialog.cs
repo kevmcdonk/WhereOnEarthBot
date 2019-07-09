@@ -35,6 +35,7 @@ namespace Microsoft.BotBuilderSamples.Dialogs
             tableService = new TableService(Configuration["DailyBingTableConnectionString"], Configuration["DailyBingTableName"]);
 
             AddDialog(new TextPrompt(nameof(TextPrompt)));
+            AddDialog(new AttachmentPrompt(nameof(AttachmentPrompt)));
             AddDialog(new WaterfallDialog(nameof(WaterfallDialog), new WaterfallStep[]
             {
                 IntroStepAsync,
@@ -50,16 +51,60 @@ namespace Microsoft.BotBuilderSamples.Dialogs
         {
             DailyBing dailyBing = await tableService.GetDailyBing();
             DailyBingInfo info = await tableService.GetLatestInfo();
-            bool allresultsreceived = await CheckWhetherAllEntriesReceived(stepContext, cancellationToken, dailyBing, info);
+            DailyBingEntriesStatus currentStatus = await CheckWhetherAllEntriesReceived(stepContext, cancellationToken, dailyBing, info);
 
-            if (allresultsreceived)
+            if (currentStatus.allResultsReceived)
             {
                 await CheckResults(stepContext, cancellationToken, dailyBing, info);
                 return await stepContext.EndDialogAsync(cancellationToken);
             }
             else
             {
-                return await stepContext.PromptAsync(nameof(TextPrompt), new PromptOptions { Prompt = MessageFactory.Text("What is your guess?") }, cancellationToken);
+                
+                IMessageActivity reply = MessageFactory.Attachment(new List<Attachment>());
+
+                reply.Attachments.Add(AttachmentHelper.AwaitingGuesses(currentStatus.userCount, dailyBing.photoUrl, currentStatus.usersWithEntryCount));
+                PromptOptions promptOptions = new PromptOptions
+                {
+                    Prompt = (Activity)reply,
+
+                };
+
+                string messageText = null;
+                if (stepContext != null && stepContext.Result != null)
+                {
+                    messageText = stepContext.Result.ToString();
+                }
+                if (stepContext != null && stepContext.Context != null && stepContext.Context.Activity != null && stepContext.Context.Activity.Text != null)
+                {
+                    messageText = stepContext.Context.Activity.Text;
+                }
+                if (messageText != null)
+                {
+                    if (messageText.ToLower().Contains("choose image"))
+                    {
+                        return await stepContext.PromptAsync(nameof(AttachmentPrompt), promptOptions, cancellationToken);
+                    }
+
+                    if (messageText.ToLower().Contains("check results"))
+                    {
+                        return await stepContext.ContinueDialogAsync(cancellationToken);
+                    }
+
+                    var userEntries = dailyBing.entries.FindAll(e => e.userName == stepContext.Context.Activity.From.Name);
+                    if (userEntries != null && userEntries.Count > 0)
+                    {
+                        IMessageActivity beginReply = MessageFactory.Text($"Sorry {stepContext.Context.Activity.From.Name}, we already have a result from you. Time for the next person.");
+                        PromptOptions beginOptions = new PromptOptions()
+                        {
+                            Prompt = (Activity)beginReply
+                        };
+                        return await stepContext.PromptAsync(nameof(TextPrompt), beginOptions, cancellationToken);
+                    }
+                    return await stepContext.NextAsync(messageText);
+                }
+
+                return await stepContext.PromptAsync(nameof(TextPrompt), promptOptions, cancellationToken);
             }
         }
 
@@ -111,14 +156,17 @@ namespace Microsoft.BotBuilderSamples.Dialogs
             }
         }
 
-        private async Task<bool> CheckWhetherAllEntriesReceived(WaterfallStepContext stepContext, CancellationToken cancellationToken, DailyBing dailyBing, DailyBingInfo info)
+        private async Task<DailyBingEntriesStatus> CheckWhetherAllEntriesReceived(WaterfallStepContext stepContext, CancellationToken cancellationToken, DailyBing dailyBing, DailyBingInfo info)
         {
             try
             {
                 // Fill in the "standard" properties for BotMessageReceived
                 // and add our own property.
                 Logger.LogInformation("Checking whether all entries received");
-
+                DailyBingEntriesStatus currentStatus = new DailyBingEntriesStatus()
+                {
+                    allResultsReceived = false
+                };
                 
                 List<DailyBingEntry> todayEntries = dailyBing.entries;
                 if (info.users == null)
@@ -155,18 +203,12 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                 
                 if (usersWithEntryCount >= userCount)
                 {
-                    return true;
+                    currentStatus.allResultsReceived = true;
                 }
 
-                await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Still more results from users to come - {usersWithEntryCount} users have entered out of the {userCount} in this channel."), cancellationToken);
-
-
-                //TODO: remove this for a user
-                if (todayEntries.Count > userCount)
-                {
-                    return true;
-                }
-                return false;
+                currentStatus.userCount = userCount;
+                currentStatus.usersWithEntryCount = usersWithEntryCount;
+                return currentStatus;
             }
             catch(Exception exp)
             {
