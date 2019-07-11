@@ -26,13 +26,30 @@ namespace DailyBingChallengeBot.Helpers
 
         }
 
-        public static Attachment AwaitingGuesses(int userCount, string imageUrl, int usersWithEntryCount)
+        public static Attachment AwaitingGuesses(int userCount, string imageUrl, int usersWithEntryCount, string userName, string guessLocation)
+        {
+            var heroCard = new HeroCard
+            {
+                Title = $"Thanks {userName}",
+                Subtitle = $"I'm saving your guess as {guessLocation}",
+                Text = $"Still more results from users to come - {usersWithEntryCount} users have entered out of the {userCount} in this channel.",
+                Images = new List<CardImage> { new CardImage(imageUrl) }
+            };
+
+            IMessageActivity reply = MessageFactory.Attachment(new List<Attachment>());
+
+            Microsoft.Bot.Schema.Attachment attachment = heroCard.ToAttachment();
+            return attachment;
+
+        }
+
+        public static Attachment ImageChosen(string imageUrl)
         {
             var heroCard = new HeroCard
             {
                 Title = "The image has been chosen",
-                Subtitle = $"But we are still waiting on guesses",
-                Text = $"Still more results from users to come - {usersWithEntryCount} users have entered out of the {userCount} in this channel.",
+                Subtitle = $"Time to get your guesses in",
+                Text = $"Reply with @BingBot and your guess. Results will come in when everyone has added a guess or at 16:00. Good luck!",
                 Images = new List<CardImage> { new CardImage(imageUrl) }
             };
 

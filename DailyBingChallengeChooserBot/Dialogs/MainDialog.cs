@@ -111,7 +111,7 @@ namespace Microsoft.BotBuilderSamples.Dialogs
         {
             var command = stepContext.Result.ToString();
 
-            if (command.ToLower().Contains("choose"))
+            if (command.ToLower().Contains("choose image"))
             {
                 int imageIndex = await GetImageIndex(stepContext);
                 BingImageService imageService = new BingImageService();
@@ -129,8 +129,13 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                 dailyBing.publishedTime = DateTime.Now;
                 dailyBing.currentStatus = DailyBingStatus.Guessing;
                 await tableService.SaveDailyBing(dailyBing);
-                return await stepContext.ReplaceDialogAsync(nameof(BingGuesserDialog), null, cancellationToken);
-                // return await stepContext.BeginDialogAsync(nameof(BingChooserDialog), null, cancellationToken);
+
+                IMessageActivity reply = MessageFactory.Attachment(new List<Attachment>());
+
+                reply.Attachments.Add(AttachmentHelper.ImageChosen(dailyBing.photoUrl));
+                await stepContext.Context.SendActivityAsync((Activity)reply);
+                return await stepContext.EndDialogAsync(cancellationToken);
+                //return await stepContext.ReplaceDialogAsync(nameof(BingGuesserDialog), promptOptions, cancellationToken);
             }
             else if (command.ToLower().Contains("try another image"))
             {

@@ -60,16 +60,6 @@ namespace Microsoft.BotBuilderSamples.Dialogs
             }
             else
             {
-                
-                IMessageActivity reply = MessageFactory.Attachment(new List<Attachment>());
-
-                reply.Attachments.Add(AttachmentHelper.AwaitingGuesses(currentStatus.userCount, dailyBing.photoUrl, currentStatus.usersWithEntryCount));
-                PromptOptions promptOptions = new PromptOptions
-                {
-                    Prompt = (Activity)reply,
-
-                };
-
                 string messageText = null;
                 if (stepContext != null && stepContext.Result != null)
                 {
@@ -81,11 +71,6 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                 }
                 if (messageText != null)
                 {
-                    if (messageText.ToLower().Contains("choose image"))
-                    {
-                        return await stepContext.PromptAsync(nameof(AttachmentPrompt), promptOptions, cancellationToken);
-                    }
-
                     if (messageText.ToLower().Contains("check results"))
                     {
                         return await stepContext.ContinueDialogAsync(cancellationToken);
@@ -104,6 +89,13 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                     return await stepContext.NextAsync(messageText);
                 }
 
+                IMessageActivity reply = MessageFactory.Attachment(new List<Attachment>());
+                reply.Attachments.Add(AttachmentHelper.ImageChosen(dailyBing.photoUrl));
+                PromptOptions promptOptions = new PromptOptions
+                {
+                    Prompt = (Activity)reply,
+
+                };
                 return await stepContext.PromptAsync(nameof(TextPrompt), promptOptions, cancellationToken);
             }
         }
@@ -113,10 +105,12 @@ namespace Microsoft.BotBuilderSamples.Dialogs
             BingMapService mapService = new BingMapService(Configuration["BingMapsAPI"]);
 
             string guessText = stepContext.Result.ToString();
+            DailyBingInfo info = await tableService.GetLatestInfo();
+
             if (guessText.ToLower().Contains("check results"))
             {
                 DailyBing dailyBing = await tableService.GetDailyBing();
-                DailyBingInfo info = await tableService.GetLatestInfo();
+                
                 await CheckResults(stepContext, cancellationToken, dailyBing, info);
                 return await stepContext.EndDialogAsync(cancellationToken);
             }
@@ -148,10 +142,13 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                     entry.userId = stepContext.Context.Activity.From.Id;
                     dailyBing.entries.Add(entry);
                     await tableService.SaveDailyBing(dailyBing);
-                    await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Saving your guess as {entry.BingResponse}"), cancellationToken);
-                    DailyBingInfo info = await tableService.GetLatestInfo();
 
-                    return await stepContext.BeginDialogAsync(nameof(BingGuesserDialog), null, cancellationToken);
+                    IMessageActivity reply = MessageFactory.Attachment(new List<Attachment>());
+                    DailyBingEntriesStatus currentStatus = await CheckWhetherAllEntriesReceived(stepContext, cancellationToken, dailyBing, info);
+                    reply.Attachments.Add(AttachmentHelper.AwaitingGuesses(currentStatus.userCount, dailyBing.photoUrl, currentStatus.usersWithEntryCount, entry.userName, entry.BingResponse));
+
+                    await stepContext.Context.SendActivityAsync((Activity)reply);
+                    return await stepContext.EndDialogAsync(null, cancellationToken);
                 }
             }
         }
