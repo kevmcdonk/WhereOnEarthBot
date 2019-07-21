@@ -93,7 +93,14 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                 {
                     if (!dailyBing.resultSet)
                     {
-                        return await stepContext.ReplaceDialogAsync(nameof(BingGuesserDialog), null, cancellationToken);
+                        // Pass on the check results message from the proactive controller if set
+                        PromptOptions options = null;
+                        if (stepContext != null && stepContext.Options != null)
+                        {
+                            options = (PromptOptions)stepContext.Options;
+                            
+                        }
+                        return await stepContext.ReplaceDialogAsync(nameof(BingGuesserDialog), options, cancellationToken);
                     }
                     else
                     {

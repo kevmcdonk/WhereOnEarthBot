@@ -65,15 +65,21 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                 {
                     messageText = stepContext.Result.ToString();
                 }
-                if (stepContext != null && stepContext.Context != null && stepContext.Context.Activity != null && stepContext.Context.Activity.Text != null)
+                else if (stepContext != null && stepContext.Context != null && stepContext.Context.Activity != null && stepContext.Context.Activity.Text != null)
                 {
                     messageText = stepContext.Context.Activity.Text;
+                }
+                else if (stepContext != null && stepContext.Options != null)
+                {
+                    PromptOptions options = (PromptOptions)stepContext.Options;
+                    messageText = options.Prompt.Text;
                 }
                 if (messageText != null)
                 {
                     if (messageText.ToLower().Contains("check results"))
                     {
-                        return await stepContext.ContinueDialogAsync(cancellationToken);
+                        await CheckResults(stepContext, cancellationToken, dailyBing, info);
+                        return await stepContext.EndDialogAsync(cancellationToken);
                     }
 
                     var userEntries = dailyBing.entries.FindAll(e => e.userName == stepContext.Context.Activity.From.Name);

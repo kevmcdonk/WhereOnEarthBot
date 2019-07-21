@@ -14,6 +14,10 @@ using Microsoft.BotBuilderSamples.Dialogs;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Bot.Builder.ApplicationInsights;
 using Microsoft.Bot.Builder.Integration.ApplicationInsights.Core;
+using System.Collections.Concurrent;
+using Microsoft.Bot.Schema;
+using Microsoft.Bot.Connector.Authentication;
+using Microsoft.Bot.Builder.Azure;
 
 
 namespace Microsoft.BotBuilderSamples
@@ -45,6 +49,8 @@ namespace Microsoft.BotBuilderSamples
             // Add telemetry initializer that will set the correlation context for all telemetry items
             services.AddSingleton<ITelemetryInitializer, OperationCorrelationTelemetryInitializer>();
 
+            services.AddSingleton<ICredentialProvider, ConfigurationCredentialProvider>();
+
             // Add telemetry initializer that sets the user ID and session ID (in addition to other 
             // bot-specific properties, such as activity ID)
             services.AddSingleton<ITelemetryInitializer, TelemetryBotIdInitializer>();
@@ -54,20 +60,29 @@ namespace Microsoft.BotBuilderSamples
             // Create the Bot Framework Adapter with error handling enabled.
             services.AddSingleton<IBotFrameworkHttpAdapter, AdapterWithErrorHandler>();
 
-            // Create the storage we'll be using for User and Conversation state. (Memory is great for testing purposes.)
-            services.AddSingleton<IStorage, MemoryStorage>();
+            var dataStore = new AzureBlobStorage(Configuration["BotStateStorageAccount"], Configuration["BotStateContainer"]);
+
+            // Create Conversation State object.
+            // The Conversation State object is where we persist anything at the conversation-scope.
+            var conversationState = new ConversationState(dataStore);
+
+            // Register conversation state.
+            services.AddSingleton<ConversationState>(conversationState);
+            services.AddSingleton<IStorage>(dataStore);
+            //services.AddSingleton<IStorage, MemoryStorage>();
 
             // Create the User state. (Used in this bot's Dialog implementation.)
             services.AddSingleton<UserState>();
 
             // Create the Conversation state. (Used by the Dialog system itself.)
-            services.AddSingleton<ConversationState>();
+            //services.AddSingleton<ConversationState>();
+
+            services.AddSingleton<ConcurrentDictionary<string, ConversationReference>>();
 
             // The Dialog that will be run by the bot.
             services.AddSingleton<MainDialog>();
 
             // Create the bot as a transient. In this case the ASP Controller is expecting an IBot.
-            //services.AddTransient<IBot, DialogAndWelcomeBot<MainDialog>>();
             services.AddTransient<IBot, DialogBot<MainDialog>>();
         }
 
