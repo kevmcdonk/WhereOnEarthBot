@@ -42,13 +42,14 @@ namespace DailyBingChallengeBot.Controllers
         IConfiguration _configuration;
         ILogger<MainDialog> _logger;
         ICredentialProvider _credentialProvider;
-
+        DialogBot<MainDialog> bot;
 
         public TriggerChallengeController(IBotFrameworkHttpAdapter adapter, IConfiguration configuration, ConversationState conversationState,
             ILogger<MainDialog> logger, 
             ConcurrentDictionary<string, ConversationReference> conversationReferences,
-            ICredentialProvider credentialProvider)
+            ICredentialProvider credentialProvider, DialogBot<MainDialog> bot)
         {
+            this.bot = bot;
             _adapter = adapter;
             _conversationReferences = conversationReferences;
             ConversationState = conversationState;
@@ -72,6 +73,8 @@ namespace DailyBingChallengeBot.Controllers
 
         public async Task<IActionResult> Get()
         {
+            this.bot.TriggerResultChat();
+
             if (_conversationReferences.Values.Count == 0)
             {
                 return new ContentResult()

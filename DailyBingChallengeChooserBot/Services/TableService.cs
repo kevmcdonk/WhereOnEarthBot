@@ -201,5 +201,42 @@ namespace DailyBingChallengeBot.Services
                 throw exp;
             }
         }
+
+        public async Task SaveDailyBingTeamInfo(DailyBingTeam team)
+        {
+            team.PartitionKey = typeof(DailyBingTeam).ToString();
+            team.RowKey = DateTime.Now.ToString("yyyyMMdd");
+            TableOperation insertOrMergeOperation = TableOperation.InsertOrMerge(team);
+
+            // Execute the operation.
+            TableResult result = await cloudTable.ExecuteAsync(insertOrMergeOperation);
+        }
+
+        public async Task<DailyBingTeam> getDailyBingTeamInfo()
+        {
+            string rowKey = DateTime.Now.ToString("yyyyMMdd");
+            string partitionKey = typeof(DailyBingTeam).ToString();
+
+            try
+            {
+                TableOperation retrieveOperation = TableOperation.Retrieve<DailyBingImage>(partitionKey, rowKey);
+                TableResult result = await cloudTable.ExecuteAsync(retrieveOperation);
+                DailyBingTeam team = result.Result as DailyBingTeam;
+                if (team == null)
+                {
+                    team = new DailyBingTeam()
+                    {
+                        PartitionKey = partitionKey,
+                        RowKey = rowKey
+                    };
+                }
+                return team;
+            }
+            catch (Exception exp)
+            {
+                // TODO: add logging
+                throw exp;
+            }
+        }
     }
 }

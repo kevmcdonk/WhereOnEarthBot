@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Services\StorageService.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="BingMapsRESTToolkit.Standard" Version="1.1.6" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="1.0.1" />

@@ -6,9 +6,9 @@ C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\bin\De
 C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\bin\Debug\netcoreapp2.1\DailyBingChallengeBot.Tests.runtimeconfig.dev.json
 C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\bin\Debug\netcoreapp2.1\DailyBingChallengeBot.Tests.dll
 C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\bin\Debug\netcoreapp2.1\DailyBingChallengeBot.Tests.pdb
+C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\obj\Debug\netcoreapp2.1\DailyBingChallengeBot.Tests.csprojAssemblyReference.cache
 C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\obj\Debug\netcoreapp2.1\DailyBingChallengeBot.Tests.csproj.CoreCompileInputs.cache
 C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\obj\Debug\netcoreapp2.1\DailyBingChallengeBot.Tests.AssemblyInfoInputs.cache
 C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\obj\Debug\netcoreapp2.1\DailyBingChallengeBot.Tests.AssemblyInfo.cs
 C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\obj\Debug\netcoreapp2.1\DailyBingChallengeBot.Tests.dll
 C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\obj\Debug\netcoreapp2.1\DailyBingChallengeBot.Tests.pdb
-C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBot.Tests\obj\Debug\netcoreapp2.1\DailyBingChallengeBot.Tests.csprojAssemblyReference.cache
