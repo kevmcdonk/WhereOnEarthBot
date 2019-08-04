@@ -13,7 +13,6 @@ using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Bot.Connector;
 using Microsoft.Bot.Connector.Authentication;
-using Microsoft.Bot.Connector.Teams.Models;
 using Microsoft.Bot.Schema;
 using Microsoft.BotBuilderSamples.Bots;
 using Microsoft.BotBuilderSamples.Dialogs;
@@ -47,9 +46,9 @@ namespace DailyBingChallengeBot.Controllers
         public TriggerChallengeController(IBotFrameworkHttpAdapter adapter, IConfiguration configuration, ConversationState conversationState,
             ILogger<MainDialog> logger, 
             ConcurrentDictionary<string, ConversationReference> conversationReferences,
-            ICredentialProvider credentialProvider, DialogBot<MainDialog> bot)
+            ICredentialProvider credentialProvider, IBot bot)
         {
-            this.bot = bot;
+            this.bot = bot as DialogBot<MainDialog>;
             _adapter = adapter;
             _conversationReferences = conversationReferences;
             ConversationState = conversationState;
@@ -73,8 +72,9 @@ namespace DailyBingChallengeBot.Controllers
 
         public async Task<IActionResult> Get()
         {
-            this.bot.TriggerResultChat();
+           await this.bot.TriggerResultChat(this._adapter);
 
+            /*
             if (_conversationReferences.Values.Count == 0)
             {
                 return new ContentResult()
@@ -89,7 +89,7 @@ namespace DailyBingChallengeBot.Controllers
                 {
                     await ((BotAdapter)_adapter).ContinueConversationAsync(_appId, conversationReference, BotCallback, default(CancellationToken));
                 }
-            
+            */
 
             // Let the caller know proactive messages have been sent
             return new ContentResult()

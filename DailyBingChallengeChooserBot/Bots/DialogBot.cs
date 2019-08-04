@@ -11,14 +11,16 @@ using DailyBingChallengeBot.Models;
 using DailyBingChallengeBot.Services;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Dialogs;
+using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Bot.Connector;
 using Microsoft.Bot.Connector.Authentication;
 using Microsoft.Bot.Connector.Teams;
-using Microsoft.Bot.Connector.Teams.Models;
 using Microsoft.Bot.Schema;
+using Microsoft.Bot.Schema.Teams;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.BotBuilderSamples.Bots
 {
@@ -76,6 +78,7 @@ namespace Microsoft.BotBuilderSamples.Bots
             var activity = turnContext.Activity;
 
             var teamsChannelData = activity.GetChannelData<TeamsChannelData>();
+            var channelId = teamsChannelData.Channel.Id;
             var tenantId = teamsChannelData.Tenant.Id;
             string myBotId = activity.Recipient.Id;
             string teamId = activity.Conversation.Id;
@@ -97,6 +100,7 @@ namespace Microsoft.BotBuilderSamples.Bots
                         // Note that in some cases we cannot resolve it to a team member, because the app was installed to the team programmatically via Graph
                         var teamMembers = await connectorClient.Conversations.GetConversationMembersAsync(teamId);
                         var personThatAddedBot = teamMembers.FirstOrDefault(x => x.Id == activity.From.Id)?.Name;
+                        var channelData = turnContext.Activity.GetChannelData<TeamsChannelData>();
 
                         await this.tableService.SaveDailyBingTeamInfo(new DailyBingTeam()
                         {
@@ -104,7 +108,9 @@ namespace Microsoft.BotBuilderSamples.Bots
                             TeamId = teamId,
                             TenantId = tenantId,
                             InstallerName = personThatAddedBot,
-                            BotId = myBotId
+                            BotId = myBotId,
+                            ChannelId = channelId,
+                            ChannelData = channelData
                         });
                     }
 
@@ -160,7 +166,7 @@ namespace Microsoft.BotBuilderSamples.Bots
             await Dialog.Run(turnContext, ConversationState.CreateProperty<DialogState>("DialogState"), cancellationToken);
         }
 
-        public async Task TriggerResultChat()
+        public async Task TriggerResultChat(IBotFrameworkHttpAdapter adapter)
         {
             // Recall all the teams where we have been added
             // For each team where bot has been added:
@@ -181,42 +187,46 @@ namespace Microsoft.BotBuilderSamples.Bots
                     try
                     {
                         MicrosoftAppCredentials.TrustServiceUrl(team.ServiceUrl);
-                        var connectorClient = new ConnectorClient(new Uri(team.ServiceUrl));
+                        ConnectorClient connectorClient = new ConnectorClient(new Uri(team.ServiceUrl), Configuration["MicrosoftAppId"], Configuration["MicrosoftAppPassword"]);
+                        // var teamName = await this.GetTeamNameAsync(connectorClient, team.TeamId);
 
-                        var teamName = await this.GetTeamNameAsync(connectorClient, team.TeamId);
-
-                    var bot = new ChannelAccount { Id = team.BotId };
+                    var bot = new ChannelAccount(team.BotId);
+                    
+                    var activity = MessageFactory.Text("Triggering the Daily Bing on schedule");
+                    //TODO: check to see if already triggered
                     var convParams = new ConversationParameters()
                     {
                         TenantId = team.TenantId,
-                        Bot = bot
+                        Bot = bot,
+                        IsGroup = true,
+                        ChannelData = team.ChannelData,
+                        Activity = activity
                     };
-                    var response = connectorClient.Conversations.CreateOrGetDirectConversation(bot, null, team.TenantId);
+                    var conversation = await connectorClient.Conversations.CreateConversationAsync(convParams);
+                    BotAdapter ba = (BotAdapter)adapter;
+                    
+                    var conversationReference = new ConversationReference(conversation.ActivityId);
+                    conversationReference.Bot = bot;
+                    conversationReference.ChannelId = team.ChannelId;
+                    conversationReference.Conversation = new ConversationAccount();
+                    var convAccount = new ConversationAccount(true, null, conversation.Id);
+                    convAccount.TenantId = team.TenantId;
+                  
+                    conversationReference.Conversation = convAccount;
+                    conversationReference.ServiceUrl = team.ServiceUrl;
+                    
+                    await ba.ContinueConversationAsync(Configuration["MicrosoftAppId"], conversationReference, BotCallback, default(CancellationToken));
 
-                    var heroCard = new HeroCard
-                    {
-                        Title = "Test proactive",
-                        Subtitle = "Bla",
-                        Text = "Bla."
-                    };
+                    // foreach (var conversation in conversations.Conversations) {
+                    //TODO: Return the card with the buttons and all the photo
+                    // Next to change dialogue to check for stuff first
+                   // await connectorClient.Conversations.SendToConversationAsync(activity);
+                    
+                    
 
-                    // construct the activity we want to post
-                    var activity = new Activity()
-                    {
-                        Type = ActivityTypes.Message,
-                        Conversation = new ConversationAccount()
-                        {
-                            Id = response.Id,
-                        },
-                        Attachments = new List<Attachment>()
-                        {
-                            heroCard.ToAttachment()
-                        }
-                    };
-
-                        await connectorClient.Conversations.SendToConversationAsync(activity);
-
-                    }
+                    //}
+                    //.CreateOrGetDirectConversation(bot, null, team.TenantId);
+                }
                     catch (Exception ex)
                     {
                         Logger.LogError(ex, ex.Message);
@@ -227,37 +237,38 @@ namespace Microsoft.BotBuilderSamples.Bots
             {
                 Logger.LogError(ex, $"Error making pairups: {ex.Message}");
             }
-            /*
+        }
 
-
-
+        private async Task BotCallback(ITurnContext turnContext, CancellationToken cancellationToken)
+        {
             try
             {
-                var conversationStateAccessors = ConversationState.CreateProperty<DialogState>(nameof(DialogState));
-
+                var conversationStateAccessors = this.ConversationState.CreateProperty<DialogState>(nameof(DialogState));
+                // need to somehow set auth for clientconnector
+                //turnContext.Adapter
                 var dialogSet = new DialogSet(conversationStateAccessors);
-
                 dialogSet.Add(this.Dialog);
 
                 var dialogContext = await dialogSet.CreateContextAsync(turnContext, cancellationToken);
+                
                 var results = await dialogContext.ContinueDialogAsync(cancellationToken);
-                //if (results.Status == DialogTurnStatus.Empty)
-                //{
-                await dialogContext.BeginDialogAsync(this.Dialog.Id, null, cancellationToken);
-                await ConversationState.SaveChangesAsync(dialogContext.Context, false, cancellationToken);
-                //}
-                //else
-                //    await turnContext.SendActivityAsync("Starting proactive message bot call back");
+                if (results.Status == DialogTurnStatus.Empty)
+                {
+                    await dialogContext.BeginDialogAsync(Dialog.Id, null, cancellationToken);
+                    await ConversationState.SaveChangesAsync(dialogContext.Context, false, cancellationToken);
+                }
+                else
+                    await turnContext.SendActivityAsync("Starting proactive message bot call back");
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 this.Logger.LogError(ex.Message);
-            }*/
+            }
         }
 
         private async Task<string> GetTeamNameAsync(ConnectorClient connectorClient, string teamId)
         {
-            var teamsConnectorClient = connectorClient.GetTeamsConnectorClient();
+            TeamsConnectorClient teamsConnectorClient = new TeamsConnectorClient(connectorClient.BaseUri, connectorClient.Credentials);//connectorClient.GetTeamsConnectorClient();
             var teamDetailsResult = await teamsConnectorClient.Teams.FetchTeamDetailsAsync(teamId);
             return teamDetailsResult.Name;
         }

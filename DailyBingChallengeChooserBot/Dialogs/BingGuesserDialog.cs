@@ -15,7 +15,6 @@ using DailyBingChallengeBot.Models;
 using DailyBingChallengeBot.Services;
 using System.Collections.Generic;
 using Microsoft.Bot.Connector;
-using Microsoft.Bot.Connector.Teams.Models;
 using DailyBingChallengeBot.Helpers;
 
 namespace Microsoft.BotBuilderSamples.Dialogs

@@ -8,6 +8,7 @@ using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.BotBuilderSamples;
 using Microsoft.Bot.Schema;
+using Microsoft.Bot.Schema.Teams;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Recognizers.Text.DataTypes.TimexExpression;
@@ -15,6 +16,7 @@ using DailyBingChallengeBot.Models;
 using DailyBingChallengeBot.Services;
 using System.Collections.Generic;
 using DailyBingChallengeBot.Helpers;
+
 
 namespace Microsoft.BotBuilderSamples.Dialogs
 {
@@ -69,8 +71,33 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                 IMessageActivity reply = null;
 
                 DailyBing dailyBing = await tableService.GetDailyBing();
+                DailyBingTeam team = await tableService.getDailyBingTeamInfo();
                 if (dailyBing.photoUrl == null)
                 {
+                    var activity = stepContext.Context.Activity;
+                    if (team.ChannelData == null)
+                    {
+                        team.ChannelData = activity.GetChannelData<TeamsChannelData>();
+                    }
+                    var teamsChannelData = team.ChannelData;
+
+                    var channelId = teamsChannelData.Channel.Id;
+                    var tenantId = teamsChannelData.Tenant.Id;
+                    string myBotId = activity.Recipient.Id;
+                    string teamId = activity.Conversation.Id;
+
+                    
+                    await this.tableService.SaveDailyBingTeamInfo(new DailyBingTeam()
+                    {
+                        ServiceUrl = activity.ServiceUrl,
+                        TeamId = teamId,
+                        TenantId = tenantId,
+                        InstallerName = "Automatic",
+                        BotId = myBotId,
+                        ChannelId = channelId,
+                        ChannelData = teamsChannelData
+                    });
+
                     reply = MessageFactory.Attachment(new List<Attachment>());
                     Attachment attachment = null;
 

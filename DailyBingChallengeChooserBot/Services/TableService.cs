@@ -5,6 +5,7 @@ using DailyBingChallengeBot.Models;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Microsoft.Azure.Cosmos.Table;
+using Microsoft.Bot.Schema.Teams;
 
 namespace DailyBingChallengeBot.Services
 {
@@ -205,7 +206,8 @@ namespace DailyBingChallengeBot.Services
         public async Task SaveDailyBingTeamInfo(DailyBingTeam team)
         {
             team.PartitionKey = typeof(DailyBingTeam).ToString();
-            team.RowKey = DateTime.Now.ToString("yyyyMMdd");
+            team.RowKey = "DailyBingTeam";
+            team.ChannelDataSerialized = JsonConvert.SerializeObject(team.ChannelData);
             TableOperation insertOrMergeOperation = TableOperation.InsertOrMerge(team);
 
             // Execute the operation.
@@ -214,12 +216,12 @@ namespace DailyBingChallengeBot.Services
 
         public async Task<DailyBingTeam> getDailyBingTeamInfo()
         {
-            string rowKey = DateTime.Now.ToString("yyyyMMdd");
+            string rowKey = "DailyBingTeam";
             string partitionKey = typeof(DailyBingTeam).ToString();
 
             try
             {
-                TableOperation retrieveOperation = TableOperation.Retrieve<DailyBingImage>(partitionKey, rowKey);
+                TableOperation retrieveOperation = TableOperation.Retrieve<DailyBingTeam>(partitionKey, rowKey);
                 TableResult result = await cloudTable.ExecuteAsync(retrieveOperation);
                 DailyBingTeam team = result.Result as DailyBingTeam;
                 if (team == null)
@@ -229,6 +231,11 @@ namespace DailyBingChallengeBot.Services
                         PartitionKey = partitionKey,
                         RowKey = rowKey
                     };
+                }
+
+                if (!string.IsNullOrEmpty(team.ChannelDataSerialized))
+                {
+                    team.ChannelData = JsonConvert.DeserializeObject<TeamsChannelData>(team.ChannelDataSerialized);
                 }
                 return team;
             }
