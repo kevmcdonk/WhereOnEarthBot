@@ -74,23 +74,6 @@ namespace DailyBingChallengeBot.Controllers
         {
            await this.bot.TriggerResultChat(this._adapter);
 
-            /*
-            if (_conversationReferences.Values.Count == 0)
-            {
-                return new ContentResult()
-                {
-                    Content = "<html><body><h1>No conversations found</h1></body></html>",
-                    ContentType = "text/html",
-                    StatusCode = (int)HttpStatusCode.OK,
-                };
-            }
-
-                foreach (var conversationReference in _conversationReferences.Values)
-                {
-                    await ((BotAdapter)_adapter).ContinueConversationAsync(_appId, conversationReference, BotCallback, default(CancellationToken));
-                }
-            */
-
             // Let the caller know proactive messages have been sent
             return new ContentResult()
             {

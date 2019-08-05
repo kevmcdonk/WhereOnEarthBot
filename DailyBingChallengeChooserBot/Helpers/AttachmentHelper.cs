@@ -52,7 +52,6 @@ namespace DailyBingChallengeBot.Helpers
                 Text = $"Reply with @BingBot and your guess. Results will come in when everyone has added a guess or at 16:00. Good luck!",
                 Images = new List<CardImage> { new CardImage(imageUrl) }
             };
-
             IMessageActivity reply = MessageFactory.Attachment(new List<Attachment>());
 
             Microsoft.Bot.Schema.Attachment attachment = heroCard.ToAttachment();

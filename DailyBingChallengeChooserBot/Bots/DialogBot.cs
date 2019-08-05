@@ -40,10 +40,10 @@ namespace Microsoft.BotBuilderSamples.Bots
         protected readonly IConfiguration Configuration;
 
         public DialogBot(
-            ConversationState conversationState, 
-            UserState userState, 
-            T dialog, 
-            ILogger<DialogBot<T>> logger, 
+            ConversationState conversationState,
+            UserState userState,
+            T dialog,
+            ILogger<DialogBot<T>> logger,
             ConcurrentDictionary<string, ConversationReference> conversationReferences,
             IConfiguration configuration
         )
@@ -82,6 +82,7 @@ namespace Microsoft.BotBuilderSamples.Bots
             var tenantId = teamsChannelData.Tenant.Id;
             string myBotId = activity.Recipient.Id;
             string teamId = activity.Conversation.Id;
+            string teamName = activity.Conversation.Name;
 
             using (var connectorClient = new ConnectorClient(new System.Uri(activity.ServiceUrl)))
             {
@@ -106,6 +107,7 @@ namespace Microsoft.BotBuilderSamples.Bots
                         {
                             ServiceUrl = activity.ServiceUrl,
                             TeamId = teamId,
+                            TeamName = teamName,
                             TenantId = tenantId,
                             InstallerName = personThatAddedBot,
                             BotId = myBotId,
@@ -151,13 +153,13 @@ namespace Microsoft.BotBuilderSamples.Bots
                 await ConversationState.SaveChangesAsync(turnContext, false, cancellationToken);
                 await UserState.SaveChangesAsync(turnContext, false, cancellationToken);
             }
-            catch(System.Exception exp)
+            catch (System.Exception exp)
             {
                 Logger.LogError(exp, $"Error setting up turn: {exp.Message} - { exp.StackTrace}", null);
             }
         }
 
-        
+
         protected override async Task OnMessageActivityAsync(ITurnContext<IMessageActivity> turnContext, CancellationToken cancellationToken)
         {
             Logger.LogInformation("Running dialog with Message Activity.");
@@ -168,32 +170,33 @@ namespace Microsoft.BotBuilderSamples.Bots
 
         public async Task TriggerResultChat(IBotFrameworkHttpAdapter adapter)
         {
-            // Recall all the teams where we have been added
-            // For each team where bot has been added:
-            //     Pull the roster of the team
-            //     Remove the members who have opted out of pairups
-            //     Match each member with someone else
-            //     Save this pair
-            // Now notify each pair found in 1:1 and ask them to reach out to the other person
-            // When contacting the user in 1:1, give them the button to opt-out
-            var installedTeamsCount = 0;
-            var pairsNotifiedCount = 0;
-            var usersNotifiedCount = 0;
-
             try
             {
                 var team = await this.tableService.getDailyBingTeamInfo();
-
-                    try
-                    {
-                        MicrosoftAppCredentials.TrustServiceUrl(team.ServiceUrl);
-                        ConnectorClient connectorClient = new ConnectorClient(new Uri(team.ServiceUrl), Configuration["MicrosoftAppId"], Configuration["MicrosoftAppPassword"]);
-                        // var teamName = await this.GetTeamNameAsync(connectorClient, team.TeamId);
+                var dailyBing = await tableService.GetDailyBing();
+                // If no photo selected, send update
+                if (dailyBing.photoUrl == null)
+                {
+                    MicrosoftAppCredentials.TrustServiceUrl(team.ServiceUrl);
+                    ConnectorClient connectorClient = new ConnectorClient(new Uri(team.ServiceUrl), Configuration["MicrosoftAppId"], Configuration["MicrosoftAppPassword"]);
+                    var teamName = await this.GetTeamNameAsync(connectorClient, team.TeamId);
 
                     var bot = new ChannelAccount(team.BotId);
-                    
-                    var activity = MessageFactory.Text("Triggering the Daily Bing on schedule");
-                    //TODO: check to see if already triggered
+                    string replyText = $"<at>@{teamName}</at> ";
+
+                    var activity = MessageFactory.Text(replyText);
+
+                    var mentioned = JObject.FromObject(new
+                    {
+                        id = team.TeamId,
+                        name = teamName
+                    });
+                    var mentionedEntity = new Entity("mention")
+                    {
+                        Properties = JObject.FromObject(new { mentioned = mentioned, text = replyText }),
+                    };
+                    activity.Entities = new[] { mentionedEntity };
+                    activity.Text = "It's time for the daily bing challenge " + replyText;
                     var convParams = new ConversationParameters()
                     {
                         TenantId = team.TenantId,
@@ -202,36 +205,23 @@ namespace Microsoft.BotBuilderSamples.Bots
                         ChannelData = team.ChannelData,
                         Activity = activity
                     };
+
                     var conversation = await connectorClient.Conversations.CreateConversationAsync(convParams);
                     BotAdapter ba = (BotAdapter)adapter;
-                    
+
                     var conversationReference = new ConversationReference(conversation.ActivityId);
                     conversationReference.Bot = bot;
                     conversationReference.ChannelId = team.ChannelId;
                     conversationReference.Conversation = new ConversationAccount();
                     var convAccount = new ConversationAccount(true, null, conversation.Id);
                     convAccount.TenantId = team.TenantId;
-                  
+
                     conversationReference.Conversation = convAccount;
                     conversationReference.ServiceUrl = team.ServiceUrl;
-                    
-                    await ba.ContinueConversationAsync(Configuration["MicrosoftAppId"], conversationReference, BotCallback, default(CancellationToken));
 
-                    // foreach (var conversation in conversations.Conversations) {
-                    //TODO: Return the card with the buttons and all the photo
-                    // Next to change dialogue to check for stuff first
-                   // await connectorClient.Conversations.SendToConversationAsync(activity);
-                    
-                    
-
-                    //}
-                    //.CreateOrGetDirectConversation(bot, null, team.TenantId);
+                    await ba.ContinueConversationAsync(Configuration["MicrosoftAppId"], conversationReference, TriggerBotCallback, default(CancellationToken));
                 }
-                    catch (Exception ex)
-                    {
-                        Logger.LogError(ex, ex.Message);
-                    }
-                
+
             }
             catch (Exception ex)
             {
@@ -239,22 +229,116 @@ namespace Microsoft.BotBuilderSamples.Bots
             }
         }
 
-        private async Task BotCallback(ITurnContext turnContext, CancellationToken cancellationToken)
+        public async Task CheckResultChat(IBotFrameworkHttpAdapter adapter)
+        {
+            try
+            {
+                var team = await this.tableService.getDailyBingTeamInfo();
+                var dailyBing = await tableService.GetDailyBing();
+                // If no photo selected, send update
+                if (dailyBing.winnerName == null)
+                {
+                    MicrosoftAppCredentials.TrustServiceUrl(team.ServiceUrl);
+                    ConnectorClient connectorClient = new ConnectorClient(new Uri(team.ServiceUrl), Configuration["MicrosoftAppId"], Configuration["MicrosoftAppPassword"]);
+                    var teamName = await this.GetTeamNameAsync(connectorClient, team.TeamId);
+
+                    var bot = new ChannelAccount(team.BotId);
+                    string replyText = $"<at>@{teamName}</at> ";
+
+                    var activity = MessageFactory.Text(replyText);
+
+                    var mentioned = JObject.FromObject(new
+                    {
+                        id = team.TeamId,
+                        name = teamName
+                    });
+                    var mentionedEntity = new Entity("mention")
+                    {
+                        Properties = JObject.FromObject(new { mentioned = mentioned, text = replyText }),
+                    };
+                    activity.Entities = new[] { mentionedEntity };
+                    activity.Text = "It's time for the results " + replyText;
+                    var convParams = new ConversationParameters()
+                    {
+                        TenantId = team.TenantId,
+                        Bot = bot,
+                        IsGroup = true,
+                        ChannelData = team.ChannelData,
+                        Activity = activity
+                    };
+
+                    var conversation = await connectorClient.Conversations.CreateConversationAsync(convParams);
+                    BotAdapter ba = (BotAdapter)adapter;
+
+                    var conversationReference = new ConversationReference(conversation.ActivityId);
+                    conversationReference.Bot = bot;
+                    conversationReference.ChannelId = team.ChannelId;
+                    conversationReference.Conversation = new ConversationAccount();
+                    var convAccount = new ConversationAccount(true, null, conversation.Id);
+                    convAccount.TenantId = team.TenantId;
+
+                    conversationReference.Conversation = convAccount;
+                    conversationReference.ServiceUrl = team.ServiceUrl;
+
+                    await ba.ContinueConversationAsync(Configuration["MicrosoftAppId"], conversationReference, ResultsBotCallback, default(CancellationToken));
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, $"Error making pairups: {ex.Message}");
+            }
+        }
+
+        private async Task TriggerBotCallback(ITurnContext turnContext, CancellationToken cancellationToken)
         {
             try
             {
                 var conversationStateAccessors = this.ConversationState.CreateProperty<DialogState>(nameof(DialogState));
-                // need to somehow set auth for clientconnector
-                //turnContext.Adapter
+
                 var dialogSet = new DialogSet(conversationStateAccessors);
                 dialogSet.Add(this.Dialog);
 
                 var dialogContext = await dialogSet.CreateContextAsync(turnContext, cancellationToken);
-                
+
                 var results = await dialogContext.ContinueDialogAsync(cancellationToken);
                 if (results.Status == DialogTurnStatus.Empty)
                 {
                     await dialogContext.BeginDialogAsync(Dialog.Id, null, cancellationToken);
+                    await ConversationState.SaveChangesAsync(dialogContext.Context, false, cancellationToken);
+                }
+                else
+                    await turnContext.SendActivityAsync("Starting proactive message bot call back");
+            }
+            catch (Exception ex)
+            {
+                this.Logger.LogError(ex.Message);
+            }
+
+        }
+
+        private async Task ResultsBotCallback(ITurnContext turnContext, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var conversationStateAccessors = this.ConversationState.CreateProperty<DialogState>(nameof(DialogState));
+
+                var dialogSet = new DialogSet(conversationStateAccessors);
+                dialogSet.Add(this.Dialog);
+
+                var dialogContext = await dialogSet.CreateContextAsync(turnContext, cancellationToken);
+
+                var results = await dialogContext.ContinueDialogAsync(cancellationToken);
+                
+                if (results.Status == DialogTurnStatus.Empty)
+                {
+                    IMessageActivity checkResultsText = MessageFactory.Text($"@BingBot Check results");
+                    PromptOptions checkResultsOptions = new PromptOptions()
+                    {
+                        Prompt = (Activity)checkResultsText
+                    };
+
+                    await dialogContext.BeginDialogAsync(Dialog.Id, checkResultsOptions, cancellationToken);
                     await ConversationState.SaveChangesAsync(dialogContext.Context, false, cancellationToken);
                 }
                 else

@@ -10,6 +10,7 @@ namespace DailyBingChallengeBot.Models
     {
         public string ServiceUrl { get; set; }
         public string TeamId { get; set; }
+        public string TeamName { get; set; }
         public string TenantId { get; set; }
         public string InstallerName { get; set; }
         public string BotId { get; set; }

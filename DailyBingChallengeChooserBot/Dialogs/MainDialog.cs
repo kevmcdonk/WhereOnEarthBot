@@ -84,13 +84,14 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                     var channelId = teamsChannelData.Channel.Id;
                     var tenantId = teamsChannelData.Tenant.Id;
                     string myBotId = activity.Recipient.Id;
-                    string teamId = activity.Conversation.Id;
-
+                    string teamId = teamsChannelData.Team.Id;
+                    string teamName = teamsChannelData.Team.Name;
                     
                     await this.tableService.SaveDailyBingTeamInfo(new DailyBingTeam()
                     {
                         ServiceUrl = activity.ServiceUrl,
                         TeamId = teamId,
+                        TeamName = teamName,
                         TenantId = tenantId,
                         InstallerName = "Automatic",
                         BotId = myBotId,
@@ -167,6 +168,8 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                 IMessageActivity reply = MessageFactory.Attachment(new List<Attachment>());
 
                 reply.Attachments.Add(AttachmentHelper.ImageChosen(dailyBing.photoUrl));
+                var activity = (Activity)reply;
+                
                 await stepContext.Context.SendActivityAsync((Activity)reply);
                 return await stepContext.EndDialogAsync(cancellationToken);
                 //return await stepContext.ReplaceDialogAsync(nameof(BingGuesserDialog), promptOptions, cancellationToken);
