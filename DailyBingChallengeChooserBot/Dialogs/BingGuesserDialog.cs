@@ -141,7 +141,12 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                 {
                     DailyBing dailyBing = await tableService.GetDailyBing();
 
+                    //original
+                    //double distanceFromResult = (Math.Pow(entry.longitude - dailyBing.longitude, 2) + Math.Pow(entry.latitude - dailyBing.latitude, 2));
+
+                    //new
                     double distanceFromResult = (Math.Pow(entry.longitude - dailyBing.longitude, 2) + Math.Pow(entry.latitude - dailyBing.latitude, 2));
+
                     entry.distanceFrom = distanceFromResult;
                     entry.userName = stepContext.Context.Activity.From.Name;
                     entry.userId = stepContext.Context.Activity.From.Id;
