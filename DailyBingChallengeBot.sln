@@ -4,6 +4,8 @@ VisualStudioVersion = 16.0.29009.5
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DailyBingChallengeBot", "DailyBingChallengeChooserBot\DailyBingChallengeBot.csproj", "{78D7BF8C-2612-4658-B99A-55158A3A58A9}"
 EndProject
+Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "DailyBingChallengeBotDeployment", "DailyBingChallengeBotDeployment\DailyBingChallengeBotDeployment.deployproj", "{F91AC8BD-2A3A-4A82-99C2-EF5026745D25}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -14,6 +16,10 @@ Global
 		{78D7BF8C-2612-4658-B99A-55158A3A58A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{78D7BF8C-2612-4658-B99A-55158A3A58A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{78D7BF8C-2612-4658-B99A-55158A3A58A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F91AC8BD-2A3A-4A82-99C2-EF5026745D25}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F91AC8BD-2A3A-4A82-99C2-EF5026745D25}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F91AC8BD-2A3A-4A82-99C2-EF5026745D25}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F91AC8BD-2A3A-4A82-99C2-EF5026745D25}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
