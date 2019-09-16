@@ -24,6 +24,7 @@ namespace DailyBingChallengeBot.Services
                 CloudTableClient cloudBlobClient = tableAccount.CreateCloudTableClient();
 
                 cloudTable = cloudBlobClient.GetTableReference(tableName);
+                cloudTable.CreateIfNotExists();
             }
             else
             {

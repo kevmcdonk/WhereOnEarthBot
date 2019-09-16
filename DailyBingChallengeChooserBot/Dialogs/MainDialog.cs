@@ -26,11 +26,12 @@ namespace Microsoft.BotBuilderSamples.Dialogs
         protected readonly ILogger Logger;
         private TableService tableService;
 
-        public MainDialog(IConfiguration configuration, ILogger<MainDialog> logger)
+        public MainDialog(IConfiguration configuration, ILogger<MainDialog> logger, IBotTelemetryClient telemetryClient)
             : base(nameof(MainDialog), configuration["ConnectionName"])
         {
             Configuration = configuration;
             Logger = logger;
+            TelemetryClient = telemetryClient;
 
             AddDialog(new OAuthPrompt(
                 nameof(OAuthPrompt),
@@ -42,14 +43,23 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                     Timeout = 300000, // User has 5 minutes to login
                 }));
 
-            AddDialog(new TextPrompt(nameof(TextPrompt)));
-            AddDialog(new BingGuesserDialog(nameof(BingGuesserDialog), configuration, logger));
+            AddDialog(new TextPrompt(nameof(TextPrompt))
+            {
+                TelemetryClient = telemetryClient,
+            });
+            AddDialog(new BingGuesserDialog(nameof(BingGuesserDialog), configuration, logger)
+            {
+                TelemetryClient = telemetryClient,
+            });
             AddDialog(new WaterfallDialog(nameof(WaterfallDialog), new WaterfallStep[]
             {
                 IntroStepAsync,
                 ActStepAsync,
                 FinalStepAsync
-            }));
+            })
+            {
+                TelemetryClient = telemetryClient,
+            });
 
             // The initial child Dialog to run.
             InitialDialogId = nameof(WaterfallDialog);
@@ -59,8 +69,10 @@ namespace Microsoft.BotBuilderSamples.Dialogs
 
         private async Task<DialogTurnResult> IntroStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
+            TelemetryClient.TrackTrace("Main dialog started", Severity.Information, null);
             if (string.IsNullOrEmpty(Configuration["DailyBingTableConnectionString"]))
             {
+                TelemetryClient.TrackTrace("Connection String not defined", Severity.Error, null);
                 await stepContext.Context.SendActivityAsync(
                     MessageFactory.Text("NOTE: Storage Connection String is not configured. To continue, add 'DailyBingTableConnectionString' to the appsettings.json file."), cancellationToken);
 
@@ -70,10 +82,13 @@ namespace Microsoft.BotBuilderSamples.Dialogs
             {
                 IMessageActivity reply = null;
 
+                TelemetryClient.TrackTrace("Get Daily Bing and Team Info", Severity.Information, null);
                 DailyBing dailyBing = await tableService.GetDailyBing();
                 DailyBingTeam team = await tableService.getDailyBingTeamInfo();
+                TelemetryClient.TrackTrace("Check whether today's challenge exists", Severity.Information, null);
                 if (dailyBing.photoUrl == null)
                 {
+                    TelemetryClient.TrackTrace("No Daily Bing so check details", Severity.Information, null);
                     var activity = stepContext.Context.Activity;
                     if (team.ChannelData == null)
                     {
@@ -106,15 +121,20 @@ namespace Microsoft.BotBuilderSamples.Dialogs
 
                     if (info.currentSource == ImageSource.Google)
                     {
+                        TelemetryClient.TrackTrace("Current source is Google so get an image", Severity.Information, null);
                         attachment = await GetGoogleImageChoiceAttachment();
+                        TelemetryClient.TrackTrace("Loaded Google image", Severity.Information, null);
                     }
                     else
                     {
+                        TelemetryClient.TrackTrace("Current source is Bing so get the latest image", Severity.Information, null);
                         int imageIndex = info.currentImageIndex;
                         attachment = await GetBingImageChoiceAttachment(imageIndex);
+                        TelemetryClient.TrackTrace("Loaded Bing image", Severity.Information, null);
                     }
 
                     reply.Attachments.Add(attachment);
+                    TelemetryClient.TrackTrace("Sending image reply", Severity.Information, null);
                     return await stepContext.PromptAsync(nameof(TextPrompt), new PromptOptions { Prompt = (Activity)reply }, cancellationToken);
                 }
                 else

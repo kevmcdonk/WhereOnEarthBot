@@ -1,0 +1,21 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "botName": {
+      "value": "BingBotDev4"
+    },
+    "botIconUrl": {
+      "value": "https://docs.botframework.com/static/devportal/client/images/bot-framework-default.png"
+    },
+    "botAppId": {
+      "value": "3c01aa0a-017c-4696-bf50-23a05980e1be"
+    },
+    "botAppPassword": {
+      "value": "czjxG4[0r9Vp0RW--nhswczFYAvgQdu]"
+    },
+    "resourceLocation": {
+      "value": "westeurope"
+    }
+  }
+}

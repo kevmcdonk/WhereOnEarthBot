@@ -3,19 +3,15 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "botName": {
-      "defaultValue": "DailyBingChallengeBot",
       "type": "string"
     },
     "botIconUrl": {
-      "defaultValue": "https://docs.botframework.com/static/devportal/client/images/bot-framework-default.png",
       "type": "string"
     },
     "botAppId": {
-      "defaultValue": "",
       "type": "string"
     },
     "botAppPassword": {
-      "defaultValue": "",
       "type": "string"
     },
     "resourceLocation": {
@@ -24,9 +20,9 @@
     }
   },
   "variables": {
-    "sites_dailybingchallengebot_name": "[concat('web-',parameters('botName'))]",
+    "sites_dailybingchallengebot_name": "[concat(parameters('botName'),'Web')]",
     "sites_dailybingchallengebot_url": "[concat(parameters('botName'),'Web')]",
-    "botServices_endpoint": "[concat('https://', variables('sites_dailybingchallengebot_url'))]",
+    "botServices_endpoint": "[concat('https://', variables('sites_dailybingchallengebot_url'),'.azurewebsites.net/api/messages')]",
     "appInsights_name": "[concat('appInsights-',parameters('botName'))]",
     "storageAccounts_name": "[toLower(concat('storage',parameters('botName')))]",
     "azureTables_name": "azureTables",//"[concat('azureTables-',parameters('botName'))]",
@@ -36,14 +32,14 @@
     {
       "type": "Microsoft.BotService/botServices",
       "apiVersion": "2018-07-12",
-      "name": "[variables('sites_dailybingchallengebot_name')]",
+      "name": "[parameters('botName')]",
       "location": "global",
       "sku": {
         "name": "F0"
       },
-      "kind": "sdk",
+      "kind": "bot",
       "properties": {
-        "displayName": "[variables('sites_dailybingchallengebot_name')]",
+        "displayName": "[parameters('botName')]",
         "iconUrl": "[parameters('botIconUrl')]",
         "msaAppId": "[parameters('botAppId')]",
         "luisAppIds": [],
@@ -131,10 +127,10 @@
     {
       "type": "Microsoft.BotService/botServices/channels",
       "apiVersion": "2018-07-12",
-      "name": "[concat(variables('sites_dailybingchallengebot_name'), '/MsTeamsChannel')]",
+      "name": "[concat(parameters('botName'), '/MsTeamsChannel')]",
       "location": "global",
       "dependsOn": [
-        "[resourceId('Microsoft.BotService/botServices', variables('sites_dailybingchallengebot_name'))]"
+        "[resourceId('Microsoft.BotService/botServices', parameters('botName'))]"
       ],
       "properties": {
         "channelName": "MsTeamsChannel"
@@ -143,10 +139,10 @@
     {
       "type": "Microsoft.BotService/botServices/channels",
       "apiVersion": "2018-07-12",
-      "name": "[concat(variables('sites_dailybingchallengebot_name'), '/WebChatChannel')]",
+      "name": "[concat(parameters('botName'), '/WebChatChannel')]",
       "location": "global",
       "dependsOn": [
-        "[resourceId('Microsoft.BotService/botServices', variables('sites_dailybingchallengebot_name'))]"
+        "[resourceId('Microsoft.BotService/botServices', parameters('botName'))]"
       ],
       "properties": {
         "channelName": "WebChatChannel"

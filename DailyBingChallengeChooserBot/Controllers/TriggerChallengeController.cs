@@ -41,10 +41,11 @@ namespace DailyBingChallengeBot.Controllers
         IConfiguration _configuration;
         ILogger<MainDialog> _logger;
         ICredentialProvider _credentialProvider;
+        IBotTelemetryClient _telemetryClient;
         DialogBot<MainDialog> bot;
 
         public TriggerChallengeController(IBotFrameworkHttpAdapter adapter, IConfiguration configuration, ConversationState conversationState,
-            ILogger<MainDialog> logger, 
+            ILogger<MainDialog> logger, IBotTelemetryClient telemetryClient,
             ConcurrentDictionary<string, ConversationReference> conversationReferences,
             ICredentialProvider credentialProvider, IBot bot)
         {
@@ -60,6 +61,7 @@ namespace DailyBingChallengeBot.Controllers
             _logger = logger;
             _configuration = configuration;
             _credentialProvider = credentialProvider;
+            _telemetryClient = telemetryClient;
 
             // If the channel is the Emulator, and authentication is not in use,
             // the AppId will be null.  We generate a random AppId for this case only.
@@ -89,7 +91,7 @@ namespace DailyBingChallengeBot.Controllers
                 var conversationStateAccessors = ConversationState.CreateProperty<DialogState>(nameof(DialogState));
 
                 var dialogSet = new DialogSet(conversationStateAccessors);
-                Dialog mainDialog = new MainDialog(_configuration, _logger);
+                Dialog mainDialog = new MainDialog(_configuration, _logger, _telemetryClient);
                 dialogSet.Add(mainDialog);
 
                 var dialogContext = await dialogSet.CreateContextAsync(turnContext, cancellationToken);

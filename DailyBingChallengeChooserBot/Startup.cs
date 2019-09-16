@@ -8,12 +8,11 @@ using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-
-using Microsoft.BotBuilderSamples.Bots;
-using Microsoft.BotBuilderSamples.Dialogs;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Bot.Builder.ApplicationInsights;
 using Microsoft.Bot.Builder.Integration.ApplicationInsights.Core;
+using Microsoft.BotBuilderSamples.Bots;
+using Microsoft.BotBuilderSamples.Dialogs;
 using System.Collections.Concurrent;
 using Microsoft.Bot.Schema;
 using Microsoft.Bot.Connector.Authentication;
@@ -59,6 +58,10 @@ namespace Microsoft.BotBuilderSamples
 
             // Create the Bot Framework Adapter with error handling enabled.
             services.AddSingleton<IBotFrameworkHttpAdapter, AdapterWithErrorHandler>();
+
+            // Create the telemetry middleware to track conversation events
+            services.AddSingleton<IMiddleware, TelemetryLoggerMiddleware>();
+
 
             var dataStore = new AzureBlobStorage(Configuration["BotStateStorageAccount"], Configuration["BotStateContainer"]);
 

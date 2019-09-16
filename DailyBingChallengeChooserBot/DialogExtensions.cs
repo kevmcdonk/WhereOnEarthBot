@@ -13,6 +13,7 @@ namespace Microsoft.BotBuilderSamples
         public static async Task Run(this Dialog dialog, ITurnContext turnContext, IStatePropertyAccessor<DialogState> accessor, CancellationToken cancellationToken = default(CancellationToken))
         {
             var dialogSet = new DialogSet(accessor);
+            dialogSet.TelemetryClient = dialog.TelemetryClient;
             dialogSet.Add(dialog);
 
             var dialogContext = await dialogSet.CreateContextAsync(turnContext, cancellationToken);

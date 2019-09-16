@@ -127,19 +127,6 @@ namespace Microsoft.BotBuilderSamples.Bots
             await Dialog.Run(turnContext, ConversationState.CreateProperty<DialogState>("DialogState"), cancellationToken);
         }
 
-        /*
-        protected override async Task OnMembersAddedAsync(IList<ChannelAccount> membersAdded, ITurnContext<IConversationUpdateActivity> turnContext, CancellationToken cancellationToken)
-        {
-            foreach (var member in turnContext.Activity.MembersAdded)
-            {
-                if (member.Id != turnContext.Activity.Recipient.Id)
-                {
-                    await turnContext.SendActivityAsync(MessageFactory.Text($"Welcome to the Daily Bing Challenge Chooser Bot. This is how the admin will choose the Daily Bing. Type anything to get logged in. Type 'logout' to sign-out."), cancellationToken);
-                }
-            }
-        }
-        */
-
         public override async Task OnTurnAsync(ITurnContext turnContext, CancellationToken cancellationToken = default(CancellationToken))
         {
             try
