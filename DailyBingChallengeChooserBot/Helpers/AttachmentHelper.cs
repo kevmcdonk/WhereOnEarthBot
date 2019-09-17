@@ -43,6 +43,22 @@ namespace DailyBingChallengeBot.Helpers
 
         }
 
+        public static Attachment Reminder(string imageUrl)
+        {
+            var heroCard = new HeroCard
+            {
+                Title = $"Don't forget to get your guess in",
+                Text = $"There's just 3 1/2 hours remaining (depending on my maths!)",
+                Images = new List<CardImage> { new CardImage(imageUrl) }
+            };
+
+            IMessageActivity reply = MessageFactory.Attachment(new List<Attachment>());
+
+            Microsoft.Bot.Schema.Attachment attachment = heroCard.ToAttachment();
+            return attachment;
+
+        }
+
         public static Attachment ImageChosen(string imageUrl)
         {
             var heroCard = new HeroCard

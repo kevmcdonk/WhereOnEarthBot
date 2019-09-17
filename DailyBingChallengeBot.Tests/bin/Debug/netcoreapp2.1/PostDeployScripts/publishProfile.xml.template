@@ -9,16 +9,16 @@ by editing this MSBuild file. In order to learn more about this please visit htt
     <PublishProvider>AzureWebSite</PublishProvider>
     <LastUsedBuildConfiguration>Release</LastUsedBuildConfiguration>
     <LastUsedPlatform>Any CPU</LastUsedPlatform>
-    <SiteUrlToLaunchAfterPublish>http://dailybingchallengebot.azurewebsites.net</SiteUrlToLaunchAfterPublish>
+    <SiteUrlToLaunchAfterPublish>http://{WEB_SITE_NAME}.azurewebsites.net</SiteUrlToLaunchAfterPublish>
     <LaunchSiteAfterPublish>True</LaunchSiteAfterPublish>
     <ExcludeApp_Data>False</ExcludeApp_Data>
-    <MSDeployServiceURL>dailybingchallengebot.scm.azurewebsites.net:443</MSDeployServiceURL>
-    <DeployIisAppPath>dailybingchallengebot</DeployIisAppPath>
+    <MSDeployServiceURL>{WEB_SITE_NAME}.scm.azurewebsites.net:443</MSDeployServiceURL>
+    <DeployIisAppPath>{WEB_SITE_NAME}</DeployIisAppPath>
     <RemoteSitePhysicalPath />
     <SkipExtraFilesOnServer>True</SkipExtraFilesOnServer>
     <MSDeployPublishMethod>WMSVC</MSDeployPublishMethod>
     <EnableMSDeployBackup>True</EnableMSDeployBackup>
-    <UserName>$dailybingchallengebot</UserName>
+    <UserName>${WEB_SITE_NAME}</UserName>
     <_SavePWD>True</_SavePWD>
     <_DestinationType>AzureWebSite</_DestinationType>
   </PropertyGroup>

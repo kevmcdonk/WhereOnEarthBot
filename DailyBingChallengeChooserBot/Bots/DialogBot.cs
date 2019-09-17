@@ -7,8 +7,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using DailyBingChallengeBot.Helpers;
 using DailyBingChallengeBot.Models;
 using DailyBingChallengeBot.Services;
+using Microsoft.ApplicationInsights;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
@@ -35,6 +37,7 @@ namespace Microsoft.BotBuilderSamples.Bots
         protected readonly BotState ConversationState;
         protected readonly BotState UserState;
         protected readonly ILogger Logger;
+        protected readonly IBotTelemetryClient TelemetryClient;
         private ConcurrentDictionary<string, ConversationReference> ConversationReferences;
         private TableService tableService;
         protected readonly IConfiguration Configuration;
@@ -44,6 +47,7 @@ namespace Microsoft.BotBuilderSamples.Bots
             UserState userState,
             T dialog,
             ILogger<DialogBot<T>> logger,
+            IBotTelemetryClient telemetryClient,
             ConcurrentDictionary<string, ConversationReference> conversationReferences,
             IConfiguration configuration
         )
@@ -52,6 +56,7 @@ namespace Microsoft.BotBuilderSamples.Bots
             UserState = userState;
             Dialog = dialog;
             Logger = logger;
+            TelemetryClient = telemetryClient;
             ConversationReferences = conversationReferences;
             Configuration = configuration;
 
@@ -277,6 +282,70 @@ namespace Microsoft.BotBuilderSamples.Bots
             }
         }
 
+        public async Task SendReminderChat(IBotFrameworkHttpAdapter adapter)
+        {
+            try
+            {
+                TelemetryClient.TrackTrace("Sending reminder from Bot", Severity.Information, null);
+                var team = await this.tableService.getDailyBingTeamInfo();
+                var dailyBing = await tableService.GetDailyBing();
+                // If no photo selected, send update
+                if (dailyBing.winnerName == null)
+                {
+                    MicrosoftAppCredentials.TrustServiceUrl(team.ServiceUrl);
+                    TelemetryClient.TrackTrace("Sending MicrosoftAppId: " + Configuration["MicrosoftAppId"], Severity.Information, null);
+                    ConnectorClient connectorClient = new ConnectorClient(new Uri(team.ServiceUrl), Configuration["MicrosoftAppId"], Configuration["MicrosoftAppPassword"]);
+                    var teamName = await this.GetTeamNameAsync(connectorClient, team.TeamId);
+
+                    var bot = new ChannelAccount(team.BotId);
+                    string replyText = $"<at>@{teamName}</at> ";
+
+                    var activity = MessageFactory.Text(replyText);
+
+                    var mentioned = JObject.FromObject(new
+                    {
+                        id = team.TeamId,
+                        name = teamName
+                    });
+                    var mentionedEntity = new Entity("mention")
+                    {
+                        Properties = JObject.FromObject(new { mentioned = mentioned, text = replyText }),
+                    };
+                    activity.Entities = new[] { mentionedEntity };
+                    activity.Text = "It's reminder time, " + replyText;
+                    var convParams = new ConversationParameters()
+                    {
+                        TenantId = team.TenantId,
+                        Bot = bot,
+                        IsGroup = true,
+                        ChannelData = team.ChannelData,
+                        Activity = (Activity)activity
+                    };
+                    TelemetryClient.TrackTrace("ConvParams: " + JsonConvert.SerializeObject(convParams), Severity.Information, null);
+                    var conversation = await connectorClient.Conversations.CreateConversationAsync(convParams);
+                    BotAdapter ba = (BotAdapter)adapter;
+
+                    var conversationReference = new ConversationReference(conversation.ActivityId);
+                    conversationReference.Bot = bot;
+                    conversationReference.ChannelId = team.ChannelId;
+                    conversationReference.Conversation = new ConversationAccount();
+                    var convAccount = new ConversationAccount(true, null, conversation.Id);
+                    convAccount.TenantId = team.TenantId;
+
+                    conversationReference.Conversation = convAccount;
+                    conversationReference.ServiceUrl = team.ServiceUrl;
+                    TelemetryClient.TrackTrace("Sending to Conversation", Severity.Information, null);
+                    await ba.ContinueConversationAsync(Configuration["MicrosoftAppId"], conversationReference, ReminderBotCallback, default(CancellationToken));
+                }
+
+            }
+            catch (Exception ex)
+            {
+                TelemetryClient.TrackTrace("Error sending reminder: " + ex.Message + ex.StackTrace, Severity.Error, null);
+                Logger.LogError(ex, $"Error making pairups: {ex.Message}");
+            }
+        }
+
         private async Task TriggerBotCallback(ITurnContext turnContext, CancellationToken cancellationToken)
         {
             try
@@ -319,13 +388,14 @@ namespace Microsoft.BotBuilderSamples.Bots
                 
                 if (results.Status == DialogTurnStatus.Empty)
                 {
-                    IMessageActivity checkResultsText = MessageFactory.Text($"@BingBot Check results");
+                    /*IMessageActivity checkResultsText = MessageFactory.Text($"@BingBot Check results");
                     PromptOptions checkResultsOptions = new PromptOptions()
                     {
                         Prompt = (Activity)checkResultsText
                     };
 
                     await dialogContext.BeginDialogAsync(Dialog.Id, checkResultsOptions, cancellationToken);
+                    */
                     await ConversationState.SaveChangesAsync(dialogContext.Context, false, cancellationToken);
                 }
                 else
@@ -333,6 +403,22 @@ namespace Microsoft.BotBuilderSamples.Bots
             }
             catch (Exception ex)
             {
+                this.Logger.LogError(ex.Message);
+            }
+        }
+
+        private async Task ReminderBotCallback(ITurnContext turnContext, CancellationToken cancellationToken)
+        {
+            try
+            {
+                TelemetryClient.TrackTrace("ReminderBotCallback called", Severity.Information, null);
+                var dailyBing = await tableService.GetDailyBing();
+                var activity = MessageFactory.Attachment(AttachmentHelper.Reminder(dailyBing.photoUrl));
+                await turnContext.SendActivityAsync(activity);
+            }
+            catch (Exception ex)
+            {
+                TelemetryClient.TrackTrace("Error in reminder callback: " + ex.Message + ex.StackTrace, Severity.Error, null);
                 this.Logger.LogError(ex.Message);
             }
         }

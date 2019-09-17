@@ -32,6 +32,11 @@ This bot has been created using [Bot Framework][1], it shows how to:
 
 - Install the Bot Framework Emulator version 4.3.0 or greater from [here][6]
 
+#Unit Tests
+
+See https://patrickhuber.github.io/2017/07/26/avoid-secrets-in-dot-net-core-tests.html
+The UserSecretsId is set up in the main project and then copied to the test project to leave one place to manage
+
 ## Connect to the bot using Bot Framework Emulator
 - Launch Bot Framework Emulator
 - File -> Open Bot
