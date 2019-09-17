@@ -300,7 +300,7 @@ namespace Microsoft.BotBuilderSamples.Bots
                     var bot = new ChannelAccount(team.BotId);
                     string replyText = $"<at>@{teamName}</at> ";
 
-                    var activity = MessageFactory.Attachment(new List<Attachment>());
+                    var activity = MessageFactory.Text(replyText);
 
                     var mentioned = JObject.FromObject(new
                     {
@@ -312,7 +312,7 @@ namespace Microsoft.BotBuilderSamples.Bots
                         Properties = JObject.FromObject(new { mentioned = mentioned, text = replyText }),
                     };
                     activity.Entities = new[] { mentionedEntity };
-                    activity.Attachments.Add(AttachmentHelper.Reminder(dailyBing.photoUrl, "Don't miss out if you haven't already "));
+                    activity.Text = "It's reminder time, " + replyText;
                     var convParams = new ConversationParameters()
                     {
                         TenantId = team.TenantId,
@@ -412,28 +412,9 @@ namespace Microsoft.BotBuilderSamples.Bots
             try
             {
                 TelemetryClient.TrackTrace("ReminderBotCallback called", Severity.Information, null);
-                var conversationStateAccessors = this.ConversationState.CreateProperty<DialogState>(nameof(DialogState));
-
-                var dialogSet = new DialogSet(conversationStateAccessors);
-                dialogSet.Add(this.Dialog);
-
-                var dialogContext = await dialogSet.CreateContextAsync(turnContext, cancellationToken);
-
-                var results = await dialogContext.ContinueDialogAsync(cancellationToken);
-
-                if (results.Status == DialogTurnStatus.Empty)
-                {
-                    IMessageActivity checkResultsText = MessageFactory.Text($"@BingBot Check results");
-                    PromptOptions checkResultsOptions = new PromptOptions()
-                    {
-                        Prompt = (Activity)checkResultsText
-                    };
-
-                    await dialogContext.BeginDialogAsync(Dialog.Id, checkResultsOptions, cancellationToken);
-                    await ConversationState.SaveChangesAsync(dialogContext.Context, false, cancellationToken);
-                }
-                else
-                    await turnContext.SendActivityAsync("Starting proactive message bot call back");
+                var dailyBing = await tableService.GetDailyBing();
+                var activity = MessageFactory.Attachment(AttachmentHelper.Reminder(dailyBing.photoUrl));
+                await turnContext.SendActivityAsync(activity);
             }
             catch (Exception ex)
             {

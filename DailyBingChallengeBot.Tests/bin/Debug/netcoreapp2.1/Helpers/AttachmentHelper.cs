@@ -43,12 +43,11 @@ namespace DailyBingChallengeBot.Helpers
 
         }
 
-        public static Attachment Reminder(string imageUrl, string reminderText)
+        public static Attachment Reminder(string imageUrl)
         {
             var heroCard = new HeroCard
             {
                 Title = $"Don't forget to get your guess in",
-                Subtitle = reminderText,
                 Text = $"There's just 3 1/2 hours remaining (depending on my maths!)",
                 Images = new List<CardImage> { new CardImage(imageUrl) }
             };

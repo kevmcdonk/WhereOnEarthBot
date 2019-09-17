@@ -25,8 +25,9 @@
     "botServices_endpoint": "[concat('https://', variables('sites_dailybingchallengebot_url'),'.azurewebsites.net/api/messages')]",
     "appInsights_name": "[concat('appInsights-',parameters('botName'))]",
     "storageAccounts_name": "[toLower(concat('storage',parameters('botName')))]",
-    "azureTables_name": "azureTables",//"[concat('azureTables-',parameters('botName'))]",
-    "appServicePlan_name": "[concat('appServicePlan-',parameters('botName'))]"
+    "azureTables_name": "azureTables", //"[concat('azureTables-',parameters('botName'))]",
+    "appServicePlan_name": "[concat('appServicePlan-',parameters('botName'))]",
+    "vault_name": "[concat(parameters('botName'), 'Vault')]"
   },
   "resources": [
     {
@@ -56,6 +57,52 @@
         "Application_Type": "web",
         "Flow_Type": "Redfield",
         "Request_Source": "IbizaAIExtension"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2016-10-01",
+      "name": "[variables('vault_name')]",
+      "location": "westeurope",
+      "properties": {
+        "sku": {
+          "family": "A",
+          "name": "Standard"
+        },
+        "tenantId": "[subscription().tenantId]",
+        /*TODO: Work out how to set object Id for app service
+        "accessPolicies": [
+          {
+            "tenantId": "3aad59e2-dbed-4fc0-9780-91156f9e0bc4",
+            "objectId": "[subscription().tenantId]",
+            "permissions": {
+              "keys": [
+                "Get",
+                "List",
+                "Update",
+                "Create",
+                "Import",
+                "Delete",
+                "Recover",
+                "Backup",
+                "Restore"
+              ],
+              "secrets": [
+                "Get",
+                "List",
+                "Set",
+                "Delete",
+                "Recover",
+                "Backup",
+                "Restore"
+              ],
+              "certificates": []
+            }
+          }
+        ],*/
+        "enabledForDeployment": false,
+        "enabledForDiskEncryption": false,
+        "enabledForTemplateDeployment": false
       }
     },
     {
@@ -199,7 +246,7 @@
                   "type": "Http",
                   "inputs": {
                     "method": "GET",
-                    "uri": "[concat('https://',parameters('botName'),'.azurewebsites.net/api/getresults')]"
+                    "uri": "[concat('https://',variables('sites_dailybingchallengebot_name'),'.azurewebsites.net/api/getresults')]"
                   }
                 }
               },
@@ -319,6 +366,173 @@
     {
       "type": "Microsoft.Logic/workflows",
       "apiVersion": "2017-07-01",
+      "name": "SendDailyBingReminder",
+      "location": "westeurope",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/connections', variables('azureTables_name'))]"
+      ],
+      "properties": {
+        "state": "Enabled",
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "$connections": {
+              "defaultValue": {},
+              "type": "Object"
+            }
+          },
+          "triggers": {
+            "Recurrence": {
+              "recurrence": {
+                "frequency": "Week",
+                "interval": 1,
+                "schedule": {
+                  "hours": [
+                    "12"
+                  ],
+                  "minutes": [
+                    30
+                  ],
+                  "weekDays": [
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday"
+                  ]
+                }
+              },
+              "type": "Recurrence"
+            }
+          },
+          "actions": {
+            "Check_if_result_occured": {
+              "actions": {
+                "HTTP": {
+                  "runAfter": {},
+                  "type": "Http",
+                  "inputs": {
+                    "method": "GET",
+                    "uri": "[concat('https://',variables('sites_dailybingchallengebot_name'),'.azurewebsites.net/api/getreminder')]"
+                  }
+                }
+              },
+              "runAfter": {
+                "Parse_JSON": [
+                  "Succeeded"
+                ]
+              },
+              "expression": {
+                "and": [
+                  {
+                    "not": {
+                      "equals": [
+                        "@body('Parse_JSON')?['photoUrl']",
+                        ""
+                      ]
+                    }
+                  }
+                ]
+              },
+              "type": "If"
+            },
+            "Get_Daily_Bing": {
+              "runAfter": {},
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['azuretables']['connectionId']"
+                  }
+                },
+                "method": "get",
+                "path": "/Tables/@{encodeURIComponent('DailyBing')}/entities(PartitionKey='@{encodeURIComponent('DailyBingChallengeBot.Models.DailyBing')}',RowKey='@{encodeURIComponent(formatDateTime(utcNow(),'yyyyMMdd'))}')"
+              }
+            },
+            "Parse_JSON": {
+              "runAfter": {
+                "Get_Daily_Bing": [
+                  "Succeeded"
+                ]
+              },
+              "type": "ParseJson",
+              "inputs": {
+                "content": "@body('Get_Daily_Bing')",
+                "schema": {
+                  "properties": {
+                    "PartitionKey": {
+                      "type": "string"
+                    },
+                    "RowKey": {
+                      "type": "string"
+                    },
+                    "SerializedEntries": {
+                      "type": "string"
+                    },
+                    "Timestamp": {
+                      "type": "string"
+                    },
+                    "distanceToEntry": {
+                      "type": "number"
+                    },
+                    "extractedLocation": {
+                      "type": "string"
+                    },
+                    "latitude": {
+                      "type": "number"
+                    },
+                    "longitude": {
+                      "type": "number"
+                    },
+                    "odata.etag": {
+                      "type": "string"
+                    },
+                    "odata.metadata": {
+                      "type": "string"
+                    },
+                    "photoUrl": {
+                      "type": "string"
+                    },
+                    "publishedTime": {
+                      "type": "string"
+                    },
+                    "publishedTime@odata.type": {
+                      "type": "string"
+                    },
+                    "resultSet": {
+                      "type": "boolean"
+                    },
+                    "serializableCurrentStatus": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "outputs": {}
+        },
+        "parameters": {
+          "$connections": {
+            "value": {
+              "azuretables": {
+                "connectionId": "[resourceId('Microsoft.Web/connections', variables('azureTables_name'))]",
+                "connectionName": "azuretables",
+                "id": "/subscriptions/a7d89d81-c45f-42f8-8b42-359d5f5e5386/providers/Microsoft.Web/locations/westeurope/managedApis/azuretables"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Logic/workflows",
+      "apiVersion": "2017-07-01",
       "name": "TriggerDailyBingChallenge",
       "location": "[parameters('resourceLocation')]",
       "dependsOn": [
@@ -382,7 +596,7 @@
               "type": "Http",
               "inputs": {
                 "method": "GET",
-                "uri": "[concat('https://', parameters('botName'), '.azurewebsites.net/api/triggerchallenge')]"
+                "uri": "[concat('https://', variables('sites_dailybingchallengebot_name'), '.azurewebsites.net/api/triggerchallenge')]"
               }
             }
           },
@@ -484,16 +698,16 @@
             }
           ]
         },
-          "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlan_name'))]",
-          "reserved": false,
-          "scmSiteAlsoStopped": false,
-          "clientAffinityEnabled": true,
-          "clientCertEnabled": false,
-          "hostNamesDisabled": false,
-          "containerSize": 0,
-          "dailyMemoryTimeQuota": 0,
-          "httpsOnly": false
-        }
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlan_name'))]",
+        "reserved": false,
+        "scmSiteAlsoStopped": false,
+        "clientAffinityEnabled": true,
+        "clientCertEnabled": false,
+        "hostNamesDisabled": false,
+        "containerSize": 0,
+        "dailyMemoryTimeQuota": 0,
+        "httpsOnly": false
+      }
     },
     {
       "type": "Microsoft.Web/sites/config",
