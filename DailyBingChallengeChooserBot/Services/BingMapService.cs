@@ -44,8 +44,8 @@ namespace DailyBingChallengeBot.Services
                     DailyBingEntry entry = new DailyBingEntry()
                     {
                         BingResponse = locationResult.Name,
-                        longitude = float.Parse(locationResult.Point.Coordinates[0].ToString()),
-                        latitude = float.Parse(locationResult.Point.Coordinates[1].ToString())
+                        latitude = float.Parse(locationResult.Point.Coordinates[0].ToString()),
+                        longitude = float.Parse(locationResult.Point.Coordinates[1].ToString())
                     };
 
                     return entry;
