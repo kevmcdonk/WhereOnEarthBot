@@ -1,4 +1,6 @@
 # WhereOnEarthBot
+| [Documentation](https://github.com/kevmcdonk/WhereOnEarthBot/wiki) | [Deployment guide](https://github.com/kevmcdonk/WhereOnEarthBot/Deployment-guide) | [Architecture](https://github.com/kevmcdonk/WhereOnEarthBot/Solution-overview) |
+| ---- | ---- | ---- |
 
 Have you ever looked at the daily background on Bing or the version on your desktop? Did you stop and wonder where that beautiful landscape or haunting castle is? Perhaps you turned to a colleague and said “I wonder where that is? Where do you think”. Then you did the same the next day and perhaps another colleauge joined in. This then turned in to a game amongst the team. Then it got bigger and bigger and bigger and soon the whole company was playing. Suddenly, a little bit of fun was taking up loads of time for the poor person who first came up with the idea.
 
