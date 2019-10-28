@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace DailyBingChallengeBot.Helpers
+namespace WhereOnEarthBot.Helpers
 {
     public static class DistanceMeasureHelper
     {

@@ -1,10 +1,10 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using DailyBingChallengeBot.Services;
-using DailyBingChallengeBot.Models;
+using WhereOnEarthBot.Services;
+using WhereOnEarthBot.Models;
 using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
 
-namespace DailyBingChallengeBot.Tests.Services
+namespace WhereOnEarthBot.Tests.Services
 {
     [TestClass]
     public class BingMapServiceTests
@@ -25,7 +25,7 @@ namespace DailyBingChallengeBot.Tests.Services
             string bingMapsKey = Configuration["BingMapsAPI"];
             System.Console.WriteLine("BingMapsKey: " + bingMapsKey);
             BingMapService service = new BingMapService(bingMapsKey);
-            DailyBingEntry entry = await service.GetLocationDetails("Nevada");
+            DailyChallengeEntry entry = await service.GetLocationDetails("Nevada");
             Assert.IsTrue(entry.latitude != 0 && entry.longitude != 0);
         }
     }

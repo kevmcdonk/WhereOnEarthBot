@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 using System.Web;
 using System.IO;
 using System.Text;
-using DailyBingChallengeBot.Models;
+using WhereOnEarthBot.Models;
 
-namespace DailyBingChallengeBot.Services
+namespace WhereOnEarthBot.Services
 {
 
     public class GoogleMapService
@@ -27,7 +27,7 @@ namespace DailyBingChallengeBot.Services
             Client.BaseAddress = new Uri("https://maps.googleapis.com/maps/api/");
         }
 
-        public async Task<DailyBingImage> GetRandomLocation()
+        public async Task<DailyChallengeImage> GetRandomLocation()
         {
                 Random rnd = new Random();
                 double latitude = rnd.Next(-70000, 70000);
@@ -73,7 +73,7 @@ namespace DailyBingChallengeBot.Services
                     throw new Exception("Sorry, couldn't find a suitable image. Try again shortly.");
                 }
 
-                DailyBingImage image = new DailyBingImage()
+                DailyChallengeImage image = new DailyChallengeImage()
                 {
                     ImageRegion = "Google",
                     ImageText = placesResponse.Places[0].Name,

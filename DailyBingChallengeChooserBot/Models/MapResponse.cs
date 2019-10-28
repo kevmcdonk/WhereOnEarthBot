@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace DailyBingChallengeBot.Models
+namespace WhereOnEarthBot.Models
 {
     public class Place
     {

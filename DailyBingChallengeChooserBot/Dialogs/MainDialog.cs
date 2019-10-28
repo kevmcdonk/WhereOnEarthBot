@@ -12,10 +12,10 @@ using Microsoft.Bot.Schema.Teams;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Recognizers.Text.DataTypes.TimexExpression;
-using DailyBingChallengeBot.Models;
-using DailyBingChallengeBot.Services;
+using WhereOnEarthBot.Models;
+using WhereOnEarthBot.Services;
 using System.Collections.Generic;
-using DailyBingChallengeBot.Helpers;
+using WhereOnEarthBot.Helpers;
 
 
 namespace Microsoft.BotBuilderSamples.Dialogs
@@ -47,7 +47,7 @@ namespace Microsoft.BotBuilderSamples.Dialogs
             {
                 TelemetryClient = telemetryClient,
             });
-            AddDialog(new BingGuesserDialog(nameof(BingGuesserDialog), configuration, logger, telemetryClient)
+            AddDialog(new ChallengeGuesserDialog(nameof(ChallengeGuesserDialog), configuration, logger, telemetryClient)
             {
                 TelemetryClient = telemetryClient,
             });
@@ -64,17 +64,17 @@ namespace Microsoft.BotBuilderSamples.Dialogs
             // The initial child Dialog to run.
             InitialDialogId = nameof(WaterfallDialog);
 
-            tableService = new TableService(Configuration["DailyBingTableConnectionString"], Configuration["DailyBingTableName"]);
+            tableService = new TableService(Configuration["DailyChallengeTableConnectionString"], Configuration["DailyChallengeTableName"]);
         }
 
         private async Task<DialogTurnResult> IntroStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
             TelemetryClient.TrackTrace("Main dialog started", Severity.Information, null);
-            if (string.IsNullOrEmpty(Configuration["DailyBingTableConnectionString"]))
+            if (string.IsNullOrEmpty(Configuration["DailyChallengeTableConnectionString"]))
             {
                 TelemetryClient.TrackTrace("Connection String not defined", Severity.Error, null);
                 await stepContext.Context.SendActivityAsync(
-                    MessageFactory.Text("NOTE: Storage Connection String is not configured. To continue, add 'DailyBingTableConnectionString' to the appsettings.json file."), cancellationToken);
+                    MessageFactory.Text("NOTE: Storage Connection String is not configured. To continue, add 'DailyChallengeTableConnectionString' to the appsettings.json file."), cancellationToken);
 
                 return await stepContext.EndDialogAsync(null, cancellationToken);
             }
@@ -82,13 +82,13 @@ namespace Microsoft.BotBuilderSamples.Dialogs
             {
                 IMessageActivity reply = null;
 
-                TelemetryClient.TrackTrace("Get Daily Bing and Team Info", Severity.Information, null);
-                DailyBing dailyBing = await tableService.GetDailyBing();
-                DailyBingTeam team = await tableService.getDailyBingTeamInfo();
+                TelemetryClient.TrackTrace("Get Daily Challenge and Team Info", Severity.Information, null);
+                DailyChallenge dailyChallenge = await tableService.GetDailyChallenge();
+                DailyChallengeTeam team = await tableService.getDailyChallengeTeamInfo();
                 TelemetryClient.TrackTrace("Check whether today's challenge exists", Severity.Information, null);
-                if (dailyBing.photoUrl == null)
+                if (dailyChallenge.photoUrl == null)
                 {
-                    TelemetryClient.TrackTrace("No Daily Bing so check details", Severity.Information, null);
+                    TelemetryClient.TrackTrace("No Daily Challenge so check details", Severity.Information, null);
                     var activity = stepContext.Context.Activity;
                     if (team.ChannelData == null)
                     {
@@ -102,7 +102,7 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                     string teamId = teamsChannelData.Team.Id;
                     string teamName = teamsChannelData.Team.Name;
                     
-                    await this.tableService.SaveDailyBingTeamInfo(new DailyBingTeam()
+                    await this.tableService.SaveDailyChallengeTeamInfo(new DailyChallengeTeam()
                     {
                         ServiceUrl = activity.ServiceUrl,
                         TeamId = teamId,
@@ -117,7 +117,7 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                     reply = MessageFactory.Attachment(new List<Attachment>());
                     Attachment attachment = null;
 
-                    DailyBingInfo info = await GetInfo(stepContext);
+                    DailyChallengeInfo info = await GetInfo(stepContext);
 
                     if (info.currentSource == ImageSource.Google)
                     {
@@ -139,7 +139,7 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                 }
                 else
                 {
-                    if (!dailyBing.resultSet)
+                    if (!dailyChallenge.resultSet)
                     {
                         // Pass on the check results message from the proactive controller if set
                         PromptOptions options = null;
@@ -148,13 +148,13 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                             options = (PromptOptions)stepContext.Options;
                             
                         }
-                        return await stepContext.ReplaceDialogAsync(nameof(BingGuesserDialog), options, cancellationToken);
+                        return await stepContext.ReplaceDialogAsync(nameof(ChallengeGuesserDialog), options, cancellationToken);
                     }
                     else
                     {
                         IMessageActivity winningReply = MessageFactory.Attachment(new List<Attachment>());
 
-                        winningReply.Attachments.Add(AttachmentHelper.ResultCardAttachment(dailyBing.winnerName, dailyBing.photoUrl, dailyBing.winnerGuess, dailyBing.distanceToEntry.ToString("#.##"), dailyBing.extractedLocation, dailyBing.text));
+                        winningReply.Attachments.Add(AttachmentHelper.ResultCardAttachment(dailyChallenge.winnerName, dailyChallenge.photoUrl, dailyChallenge.winnerGuess, dailyChallenge.distanceToEntry.ToString("#.##"), dailyChallenge.extractedLocation, dailyChallenge.text));
                         await stepContext.Context.SendActivityAsync(winningReply);
                         return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
                     }
@@ -170,29 +170,29 @@ namespace Microsoft.BotBuilderSamples.Dialogs
             {
                 int imageIndex = await GetImageIndex(stepContext);
                 BingImageService imageService = new BingImageService();
-                DailyBingImage image = await tableService.getDailyBingImage();
+                DailyChallengeImage image = await tableService.getDailyChallengeImage();
                 BingMapService mapService = new BingMapService(Configuration["BingMapsAPI"]);
-                DailyBingEntry bingEntry = await mapService.GetLocationDetails(image.ImageText);
-                var dailyBing = await tableService.GetDailyBing();
+                DailyChallengeEntry challengeEntry = await mapService.GetLocationDetails(image.ImageText);
+                var dailyChallenge = await tableService.GetDailyChallenge();
 
-                dailyBing.photoUrl = image.Url;
-                dailyBing.text = image.ImageText;
-                dailyBing.latitude = bingEntry.latitude;
-                dailyBing.longitude = bingEntry.longitude;
-                dailyBing.extractedLocation = bingEntry.BingResponse;
-                dailyBing.entries = new List<DailyBingEntry>();
-                dailyBing.publishedTime = DateTime.Now;
-                dailyBing.currentStatus = DailyBingStatus.Guessing;
-                await tableService.SaveDailyBing(dailyBing);
+                dailyChallenge.photoUrl = image.Url;
+                dailyChallenge.text = image.ImageText;
+                dailyChallenge.latitude = challengeEntry.latitude;
+                dailyChallenge.longitude = challengeEntry.longitude;
+                dailyChallenge.extractedLocation = challengeEntry.imageResponse;
+                dailyChallenge.entries = new List<DailyChallengeEntry>();
+                dailyChallenge.publishedTime = DateTime.Now;
+                dailyChallenge.currentStatus = DailyChallengeStatus.Guessing;
+                await tableService.SaveDailyChallenge(dailyChallenge);
 
                 IMessageActivity reply = MessageFactory.Attachment(new List<Attachment>());
 
-                reply.Attachments.Add(AttachmentHelper.ImageChosen(dailyBing.photoUrl));
+                reply.Attachments.Add(AttachmentHelper.ImageChosen(dailyChallenge.photoUrl));
                 var activity = (Activity)reply;
                 
                 await stepContext.Context.SendActivityAsync((Activity)reply);
                 return await stepContext.EndDialogAsync(cancellationToken);
-                //return await stepContext.ReplaceDialogAsync(nameof(BingGuesserDialog), promptOptions, cancellationToken);
+                //return await stepContext.ReplaceDialogAsync(nameof(ChallengeGuesserDialog), promptOptions, cancellationToken);
             }
             else if (command.ToLower().Contains("try another image"))
             {
@@ -240,12 +240,12 @@ namespace Microsoft.BotBuilderSamples.Dialogs
         private async Task<Attachment> GetBingImageChoiceAttachment(int imageIndex)
         {
             BingImageService imageService = new BingImageService();
-            DailyBingImage image = imageService.GetBingImageUrl(imageIndex);
-            await tableService.SaveDailyBingImage(image);
+            DailyChallengeImage image = imageService.GetBingImageUrl(imageIndex);
+            await tableService.SaveDailyChallengeImage(image);
 
             var heroCard = new HeroCard
             {
-                Title = "Today's Bing",
+                Title = "Today's Daily Challenge",
                 Subtitle = image.ImageRegion,
                 Text = "Click to choose the image for today or try another image.",
                 Images = new List<CardImage> { new CardImage(image.Url) },
@@ -268,12 +268,12 @@ namespace Microsoft.BotBuilderSamples.Dialogs
             {
 
 
-                DailyBingImage image = await mapService.GetRandomLocation();
-                await tableService.SaveDailyBingImage(image);
+                DailyChallengeImage image = await mapService.GetRandomLocation();
+                await tableService.SaveDailyChallengeImage(image);
 
                 heroCard = new HeroCard
                 {
-                    Title = "Today's Bing",
+                    Title = "Today's Daily Challenge",
                     Subtitle = image.ImageRegion,
                     Text = "Click to choose the image for today or try another image.",
                     Images = new List<CardImage> { new CardImage(image.Url) },
@@ -290,7 +290,7 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                 {
                     heroCard = new HeroCard
                     {
-                        Title = "Today's Bing",
+                        Title = "Today's Daily Challenge",
                         Subtitle = "Not found",
                         Text = "After trying 50 different locations, Google couldn't find a suitable image.",
                             Buttons = new List<CardAction> {
@@ -303,7 +303,7 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                 {
                     heroCard = new HeroCard
                     {
-                        Title = "Today's Bing",
+                        Title = "Today's Daily Challenge",
                         Subtitle = "Not found",
                         Text = "The Google Maps Search Service is on a low level and has exceeeded it's usage. Please wait a few minutes and try again or switch to Bing.",
                         Buttons = new List<CardAction> {
@@ -321,13 +321,13 @@ namespace Microsoft.BotBuilderSamples.Dialogs
             return heroCard.ToAttachment();
         }
 
-        private async Task<Attachment> GetDailyBingImageAttachment()
+        private async Task<Attachment> GetDailyChallengeImageAttachment()
         {
-            DailyBingImage image = await tableService.getDailyBingImage();
+            DailyChallengeImage image = await tableService.getDailyChallengeImage();
 
             var heroCard = new HeroCard
             {
-                Title = "Today's Bing",
+                Title = "Today's Daily Challenge",
                 Subtitle = image.ImageRegion,
                 Images = new List<CardImage> { new CardImage(image.Url) }
             };
@@ -335,21 +335,21 @@ namespace Microsoft.BotBuilderSamples.Dialogs
             return heroCard.ToAttachment();
         }
 
-        private async Task<DailyBingInfo> GetInfo(WaterfallStepContext context)
+        private async Task<DailyChallengeInfo> GetInfo(WaterfallStepContext context)
         {
-            DailyBingInfo info = await tableService.GetLatestInfo();
+            DailyChallengeInfo info = await tableService.GetLatestInfo();
             return info;
         }
 
         private async Task<int> GetImageIndex(WaterfallStepContext context)
         {
-            DailyBingInfo info = await tableService.GetLatestInfo();
+            DailyChallengeInfo info = await tableService.GetLatestInfo();
             return info.currentImageIndex;
         }
 
         private async Task<ImageSource> GetImageSource(WaterfallStepContext context)
         {
-            DailyBingInfo info = await tableService.GetLatestInfo();
+            DailyChallengeInfo info = await tableService.GetLatestInfo();
             return info.currentSource;
         }
 
@@ -370,7 +370,7 @@ namespace Microsoft.BotBuilderSamples.Dialogs
 
         private async Task<int> IncrementAndReturnImageIndex()
         {
-            DailyBingInfo info = await tableService.GetLatestInfo();
+            DailyChallengeInfo info = await tableService.GetLatestInfo();
             info.currentImageIndex++;
 
             if (info.currentImageIndex > 7)
@@ -385,7 +385,7 @@ namespace Microsoft.BotBuilderSamples.Dialogs
 
         private async Task<ImageSource> UpdateImageSource(ImageSource imageSource)
         {
-            DailyBingInfo info = await tableService.GetLatestInfo();
+            DailyChallengeInfo info = await tableService.GetLatestInfo();
             info.currentSource = imageSource;
 
             await tableService.SaveLatestInfo(info);
@@ -393,9 +393,9 @@ namespace Microsoft.BotBuilderSamples.Dialogs
             return info.currentSource;
         }
 
-        private async Task UpdateDailyBingImage(DailyBingImage image)
+        private async Task UpdateDailyChallengeImage(DailyChallengeImage image)
         {            
-            await tableService.SaveDailyBingImage(image);
+            await tableService.SaveDailyChallengeImage(image);
 
             return;
         }

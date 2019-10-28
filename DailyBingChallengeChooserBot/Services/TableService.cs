@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using DailyBingChallengeBot.Models;
+using WhereOnEarthBot.Models;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Bot.Schema.Teams;
 
-namespace DailyBingChallengeBot.Services
+namespace WhereOnEarthBot.Services
 {
     public class TableService
     {
@@ -31,109 +31,109 @@ namespace DailyBingChallengeBot.Services
                 throw new Exception(
                     "A connection string has not been defined in the system environment variables. " +
                     "Add an environment variable named 'storageconnectionstring' with your storage " +
-                    "connection string as a value.");
+                    "connection string as a value. Connection String - " + ConnectionString + ", TableName - " + tableName);
             }
         }
 
-        public async Task<DailyBing> GetDailyBing()
+        public async Task<DailyChallenge> GetDailyChallenge()
         {
             
             string rowKey = DateTime.Now.ToString("yyyyMMdd");
-            string partitionKey = typeof(DailyBing).ToString();
+            string partitionKey = typeof(DailyChallenge).ToString();
 
-            TableOperation retrieveOperation = TableOperation.Retrieve<DailyBing>(partitionKey, rowKey);
+            TableOperation retrieveOperation = TableOperation.Retrieve<DailyChallenge>(partitionKey, rowKey);
             TableResult result = await cloudTable.ExecuteAsync(retrieveOperation);
-            DailyBing dailyBing = result.Result as DailyBing;
-            if (dailyBing == null)
+            DailyChallenge dailyChallenge = result.Result as DailyChallenge;
+            if (dailyChallenge == null)
             {
-                dailyBing = new DailyBing()
+                dailyChallenge = new DailyChallenge()
                 {
                     RowKey = rowKey,
                     PartitionKey = partitionKey,
-                    entries = new List<DailyBingEntry>(),
+                    entries = new List<DailyChallengeEntry>(),
                     publishedTime = DateTime.Now,
                     resultSet = false
                 };
-                await SaveDailyBing(dailyBing);
+                await SaveDailyChallenge(dailyChallenge);
             }
-            if (dailyBing.entries == null)
+            if (dailyChallenge.entries == null)
             {
-                if (dailyBing.SerializedEntries == null)
+                if (dailyChallenge.SerializedEntries == null)
                 {
-                    dailyBing.entries = new List<DailyBingEntry>();
+                    dailyChallenge.entries = new List<DailyChallengeEntry>();
                 }
                 else
                 {
-                    dailyBing.entries = JsonConvert.DeserializeObject< List<DailyBingEntry>>(dailyBing.SerializedEntries);
+                    dailyChallenge.entries = JsonConvert.DeserializeObject< List<DailyChallengeEntry>>(dailyChallenge.SerializedEntries);
                 }
             }
-            if (dailyBing.publishedTime == null)
+            if (dailyChallenge.publishedTime == null)
             {
-                dailyBing.publishedTime = DateTime.Now;
+                dailyChallenge.publishedTime = DateTime.Now;
             }
-            if (dailyBing.serializableCurrentStatus != null)
+            if (dailyChallenge.serializableCurrentStatus != null)
             {
-                dailyBing.currentStatus = (DailyBingStatus)Enum.Parse(typeof(DailyBingStatus), dailyBing.serializableCurrentStatus);
+                dailyChallenge.currentStatus = (DailyChallengeStatus)Enum.Parse(typeof(DailyChallengeStatus), dailyChallenge.serializableCurrentStatus);
             }
-            return dailyBing;
+            return dailyChallenge;
         }
 
-        public async Task SaveDailyBing(DailyBing dailyBing)
+        public async Task SaveDailyChallenge(DailyChallenge dailyChallenge)
         {
-            dailyBing.PartitionKey = typeof(DailyBing).ToString();
-            dailyBing.RowKey = DateTime.Now.ToString("yyyyMMdd");
-            if (dailyBing.entries == null)
+            dailyChallenge.PartitionKey = typeof(DailyChallenge).ToString();
+            dailyChallenge.RowKey = DateTime.Now.ToString("yyyyMMdd");
+            if (dailyChallenge.entries == null)
             {
-                dailyBing.entries = new List<DailyBingEntry>();
+                dailyChallenge.entries = new List<DailyChallengeEntry>();
             }
-            if (dailyBing.publishedTime == null)
+            if (dailyChallenge.publishedTime == null)
             {
-                dailyBing.publishedTime = DateTime.Now;
+                dailyChallenge.publishedTime = DateTime.Now;
             }
-            dailyBing.SerializedEntries = JsonConvert.SerializeObject(dailyBing.entries);
-            dailyBing.serializableCurrentStatus = dailyBing.currentStatus.ToString();
-            TableOperation insertOrMergeOperation = TableOperation.InsertOrMerge(dailyBing);
+            dailyChallenge.SerializedEntries = JsonConvert.SerializeObject(dailyChallenge.entries);
+            dailyChallenge.serializableCurrentStatus = dailyChallenge.currentStatus.ToString();
+            TableOperation insertOrMergeOperation = TableOperation.InsertOrMerge(dailyChallenge);
 
             // Execute the operation.
             TableResult result = await cloudTable.ExecuteAsync(insertOrMergeOperation);
         }
 
-        public async Task<DailyBingInfo> GetLatestInfo()
+        public async Task<DailyChallengeInfo> GetLatestInfo()
         {
-            string rowKey = "DailyBingInfo";
-            string partitionKey = typeof(DailyBingInfo).ToString();
+            string rowKey = "DailyChallengeInfo";
+            string partitionKey = typeof(DailyChallengeInfo).ToString();
 
             try
             {
-                TableOperation retrieveOperation = TableOperation.Retrieve<DailyBingInfo>(partitionKey, rowKey);
+                TableOperation retrieveOperation = TableOperation.Retrieve<DailyChallengeInfo>(partitionKey, rowKey);
                 TableResult result = await cloudTable.ExecuteAsync(retrieveOperation);
-                DailyBingInfo info = result.Result as DailyBingInfo;
+                DailyChallengeInfo info = result.Result as DailyChallengeInfo;
                 if (info== null)
                 {
-                    List<DailyBingUser> basicUsers = new List<DailyBingUser>();
-                    basicUsers.Add(new DailyBingUser()
+                    List<DailyChallengeUser> basicUsers = new List<DailyChallengeUser>();
+                    basicUsers.Add(new DailyChallengeUser()
                     {
                         id = "1",
                         username = "Admin"
                     });
-                    info = new DailyBingInfo()
+                    info = new DailyChallengeInfo()
                     {
                         PartitionKey = partitionKey,
                         RowKey = rowKey,
                         currentImageIndex = 0,
                         currentSource = ImageSource.Bing,
-                        users = new List<DailyBingUser>()
+                        users = new List<DailyChallengeUser>()
                     };
                     await SaveLatestInfo(info);
                     if (info.users == null)
                     {
                         if (info.SerializedUsers == null)
                         {
-                            info.users = new List<DailyBingUser>();
+                            info.users = new List<DailyChallengeUser>();
                         }
                         else
                         {
-                            info.users = JsonConvert.DeserializeObject<List<DailyBingUser>>(info.SerializedUsers);
+                            info.users = JsonConvert.DeserializeObject<List<DailyChallengeUser>>(info.SerializedUsers);
                         }
                     }
                 }
@@ -150,26 +150,26 @@ namespace DailyBingChallengeBot.Services
             }
         }
 
-        public async Task SaveLatestInfo(DailyBingInfo info)
+        public async Task SaveLatestInfo(DailyChallengeInfo info)
         {
             if (info.users == null)
             {
-                info.users = new List<DailyBingUser>();
+                info.users = new List<DailyChallengeUser>();
             }
             info.SerializedUsers = JsonConvert.SerializeObject(info.users);
 
             info.serializableImageSource = info.currentSource.ToString();
-            info.PartitionKey = typeof(DailyBingInfo).ToString();
-            info.RowKey = "DailyBingInfo";
+            info.PartitionKey = typeof(DailyChallengeInfo).ToString();
+            info.RowKey = "DailyChallengeInfo";
             TableOperation insertOrMergeOperation = TableOperation.InsertOrMerge(info);
 
             // Execute the operation.
             TableResult result = await cloudTable.ExecuteAsync(insertOrMergeOperation);
         }
 
-        public async Task SaveDailyBingImage(DailyBingImage image)
+        public async Task SaveDailyChallengeImage(DailyChallengeImage image)
         {
-            image.PartitionKey = typeof(DailyBingImage).ToString();
+            image.PartitionKey = typeof(DailyChallengeImage).ToString();
             image.RowKey = DateTime.Now.ToString("yyyyMMdd");
             TableOperation insertOrMergeOperation = TableOperation.InsertOrMerge(image);
 
@@ -177,19 +177,19 @@ namespace DailyBingChallengeBot.Services
             TableResult result = await cloudTable.ExecuteAsync(insertOrMergeOperation);
         }
 
-        public async Task<DailyBingImage> getDailyBingImage()
+        public async Task<DailyChallengeImage> getDailyChallengeImage()
         {
             string rowKey = DateTime.Now.ToString("yyyyMMdd");
-            string partitionKey = typeof(DailyBingImage).ToString();
+            string partitionKey = typeof(DailyChallengeImage).ToString();
 
             try
             {
-                TableOperation retrieveOperation = TableOperation.Retrieve<DailyBingImage>(partitionKey, rowKey);
+                TableOperation retrieveOperation = TableOperation.Retrieve<DailyChallengeImage>(partitionKey, rowKey);
                 TableResult result = await cloudTable.ExecuteAsync(retrieveOperation);
-                DailyBingImage image = result.Result as DailyBingImage;
+                DailyChallengeImage image = result.Result as DailyChallengeImage;
                 if (image == null)
                 {
-                    image = new DailyBingImage()
+                    image = new DailyChallengeImage()
                     {
                         PartitionKey = partitionKey,
                         RowKey = rowKey
@@ -204,10 +204,10 @@ namespace DailyBingChallengeBot.Services
             }
         }
 
-        public async Task SaveDailyBingTeamInfo(DailyBingTeam team)
+        public async Task SaveDailyChallengeTeamInfo(DailyChallengeTeam team)
         {
-            team.PartitionKey = typeof(DailyBingTeam).ToString();
-            team.RowKey = "DailyBingTeam";
+            team.PartitionKey = typeof(DailyChallengeTeam).ToString();
+            team.RowKey = "DailyChallengeTeam";
             team.ChannelDataSerialized = JsonConvert.SerializeObject(team.ChannelData);
             TableOperation insertOrMergeOperation = TableOperation.InsertOrMerge(team);
 
@@ -215,19 +215,19 @@ namespace DailyBingChallengeBot.Services
             TableResult result = await cloudTable.ExecuteAsync(insertOrMergeOperation);
         }
 
-        public async Task<DailyBingTeam> getDailyBingTeamInfo()
+        public async Task<DailyChallengeTeam> getDailyChallengeTeamInfo()
         {
-            string rowKey = "DailyBingTeam";
-            string partitionKey = typeof(DailyBingTeam).ToString();
+            string rowKey = "DailyChallengeTeam";
+            string partitionKey = typeof(DailyChallengeTeam).ToString();
 
             try
             {
-                TableOperation retrieveOperation = TableOperation.Retrieve<DailyBingTeam>(partitionKey, rowKey);
+                TableOperation retrieveOperation = TableOperation.Retrieve<DailyChallengeTeam>(partitionKey, rowKey);
                 TableResult result = await cloudTable.ExecuteAsync(retrieveOperation);
-                DailyBingTeam team = result.Result as DailyBingTeam;
+                DailyChallengeTeam team = result.Result as DailyChallengeTeam;
                 if (team == null)
                 {
-                    team = new DailyBingTeam()
+                    team = new DailyChallengeTeam()
                     {
                         PartitionKey = partitionKey,
                         RowKey = rowKey

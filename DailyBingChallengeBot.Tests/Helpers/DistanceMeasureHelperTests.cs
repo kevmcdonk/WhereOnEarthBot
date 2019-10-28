@@ -1,9 +1,9 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using DailyBingChallengeBot.Services;
-using DailyBingChallengeBot.Models;
-using DailyBingChallengeBot.Helpers;
+using WhereOnEarthBot.Services;
+using WhereOnEarthBot.Models;
+using WhereOnEarthBot.Helpers;
 
-namespace DailyBingChallengeBot.Tests.Services
+namespace WhereOnEarthBot.Tests.Services
 {
     [TestClass]
     public class DistanceMeasureHelperTests

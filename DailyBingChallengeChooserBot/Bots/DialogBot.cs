@@ -7,9 +7,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using DailyBingChallengeBot.Helpers;
-using DailyBingChallengeBot.Models;
-using DailyBingChallengeBot.Services;
+using WhereOnEarthBot.Helpers;
+using WhereOnEarthBot.Models;
+using WhereOnEarthBot.Services;
 using Microsoft.ApplicationInsights;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Dialogs;
@@ -60,7 +60,7 @@ namespace Microsoft.BotBuilderSamples.Bots
             ConversationReferences = conversationReferences;
             Configuration = configuration;
 
-            tableService = new TableService(Configuration["DailyBingTableConnectionString"], Configuration["DailyBingTableName"]);
+            tableService = new TableService(Configuration["DailyChallengeTableConnectionString"], Configuration["DailyChallengeTableName"]);
         }
         private void AddConversationReference(Activity activity)
         {
@@ -108,7 +108,7 @@ namespace Microsoft.BotBuilderSamples.Bots
                         var personThatAddedBot = teamMembers.FirstOrDefault(x => x.Id == activity.From.Id)?.Name;
                         var channelData = turnContext.Activity.GetChannelData<TeamsChannelData>();
 
-                        await this.tableService.SaveDailyBingTeamInfo(new DailyBingTeam()
+                        await this.tableService.SaveDailyChallengeTeamInfo(new DailyChallengeTeam()
                         {
                             ServiceUrl = activity.ServiceUrl,
                             TeamId = teamId,
@@ -123,7 +123,7 @@ namespace Microsoft.BotBuilderSamples.Bots
 
                     if (member.Id != turnContext.Activity.Recipient.Id)
                     {
-                        await turnContext.SendActivityAsync(MessageFactory.Text($"Welcome to the Daily Bing Challenge Chooser Bot. This is how the admin will choose the Daily Bing. Type anything to get logged in. Type 'logout' to sign-out."), cancellationToken);
+                        await turnContext.SendActivityAsync(MessageFactory.Text($"Welcome to the Where On Earth Bot. This is how the admin will choose the Daily Challenge. Type anything to get logged in. Type 'logout' to sign-out."), cancellationToken);
                     }
                 }
             }
@@ -164,10 +164,10 @@ namespace Microsoft.BotBuilderSamples.Bots
         {
             try
             {
-                var team = await this.tableService.getDailyBingTeamInfo();
-                var dailyBing = await tableService.GetDailyBing();
+                var team = await this.tableService.getDailyChallengeTeamInfo();
+                var dailyChallenge = await tableService.GetDailyChallenge();
                 // If no photo selected, send update
-                if (dailyBing.photoUrl == null)
+                if (dailyChallenge.photoUrl == null)
                 {
                     MicrosoftAppCredentials.TrustServiceUrl(team.ServiceUrl);
                     ConnectorClient connectorClient = new ConnectorClient(new Uri(team.ServiceUrl), Configuration["MicrosoftAppId"], Configuration["MicrosoftAppPassword"]);
@@ -188,7 +188,7 @@ namespace Microsoft.BotBuilderSamples.Bots
                         Properties = JObject.FromObject(new { mentioned = mentioned, text = replyText }),
                     };
                     activity.Entities = new[] { mentionedEntity };
-                    activity.Text = "It's time for the daily bing challenge " + replyText;
+                    activity.Text = "It's time for the daily challenge " + replyText;
                     var convParams = new ConversationParameters()
                     {
                         TenantId = team.TenantId,
@@ -225,10 +225,10 @@ namespace Microsoft.BotBuilderSamples.Bots
         {
             try
             {
-                var team = await this.tableService.getDailyBingTeamInfo();
-                var dailyBing = await tableService.GetDailyBing();
+                var team = await this.tableService.getDailyChallengeTeamInfo();
+                var dailyChallenge = await tableService.GetDailyChallenge();
                 // If no photo selected, send update
-                if (dailyBing.winnerName == null)
+                if (dailyChallenge.winnerName == null)
                 {
                     MicrosoftAppCredentials.TrustServiceUrl(team.ServiceUrl);
                     ConnectorClient connectorClient = new ConnectorClient(new Uri(team.ServiceUrl), Configuration["MicrosoftAppId"], Configuration["MicrosoftAppPassword"]);
@@ -287,10 +287,10 @@ namespace Microsoft.BotBuilderSamples.Bots
             try
             {
                 TelemetryClient.TrackTrace("Sending reminder from Bot", Severity.Information, null);
-                var team = await this.tableService.getDailyBingTeamInfo();
-                var dailyBing = await tableService.GetDailyBing();
+                var team = await this.tableService.getDailyChallengeTeamInfo();
+                var dailyChallenge = await tableService.GetDailyChallenge();
                 // If no photo selected, send update
-                if (dailyBing.winnerName == null)
+                if (dailyChallenge.winnerName == null)
                 {
                     MicrosoftAppCredentials.TrustServiceUrl(team.ServiceUrl);
                     TelemetryClient.TrackTrace("Sending MicrosoftAppId: " + Configuration["MicrosoftAppId"], Severity.Information, null);
@@ -388,15 +388,13 @@ namespace Microsoft.BotBuilderSamples.Bots
                 
                 if (results.Status == DialogTurnStatus.Empty)
                 {
-                    /*IMessageActivity checkResultsText = MessageFactory.Text($"@BingBot Check results");
+                    IMessageActivity checkResultsText = MessageFactory.Text($"@WhereOnEarthBot Check results");
                     PromptOptions checkResultsOptions = new PromptOptions()
                     {
                         Prompt = (Activity)checkResultsText
                     };
 
                     await dialogContext.BeginDialogAsync(Dialog.Id, checkResultsOptions, cancellationToken);
-                    */
-                    await ConversationState.SaveChangesAsync(dialogContext.Context, false, cancellationToken);
                 }
                 else
                     await turnContext.SendActivityAsync("Starting proactive message bot call back");
@@ -412,8 +410,8 @@ namespace Microsoft.BotBuilderSamples.Bots
             try
             {
                 TelemetryClient.TrackTrace("ReminderBotCallback called", Severity.Information, null);
-                var dailyBing = await tableService.GetDailyBing();
-                var activity = MessageFactory.Attachment(AttachmentHelper.Reminder(dailyBing.photoUrl));
+                var dailyChallenge = await tableService.GetDailyChallenge();
+                var activity = MessageFactory.Attachment(AttachmentHelper.Reminder(dailyChallenge.photoUrl));
                 await turnContext.SendActivityAsync(activity);
             }
             catch (Exception ex)

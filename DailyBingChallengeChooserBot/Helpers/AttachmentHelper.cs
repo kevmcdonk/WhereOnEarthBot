@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Schema;
 
-namespace DailyBingChallengeBot.Helpers
+namespace WhereOnEarthBot.Helpers
 {
     public static class AttachmentHelper
     {
@@ -65,7 +65,7 @@ namespace DailyBingChallengeBot.Helpers
             {
                 Title = "The image has been chosen",
                 Subtitle = $"Time to get your guesses in",
-                Text = $"Reply with @BingBot and your guess. Results will come in when everyone has added a guess or at 16:00. Good luck!",
+                Text = $"Reply with @WhereOnEarthBot and your guess. Results will come in when everyone has added a guess or at 16:00. Good luck!",
                 Images = new List<CardImage> { new CardImage(imageUrl) }
             };
             IMessageActivity reply = MessageFactory.Attachment(new List<Attachment>());

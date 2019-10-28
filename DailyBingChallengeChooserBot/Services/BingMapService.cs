@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
-using DailyBingChallengeBot.Models;
+using WhereOnEarthBot.Models;
 
-namespace DailyBingChallengeBot.Services
+namespace WhereOnEarthBot.Services
 {
     public class BingMapService
     {
@@ -17,7 +17,7 @@ namespace DailyBingChallengeBot.Services
             BingMapsKey = bingMapsKey;
         }
 
-        public async Task<DailyBingEntry> GetLocationDetails(string locationQueryText)
+        public async Task<DailyChallengeEntry> GetLocationDetails(string locationQueryText)
         {
             try
             {
@@ -41,9 +41,9 @@ namespace DailyBingChallengeBot.Services
                     response.ResourceSets[0].Resources.Length > 0)
                 {
                     var locationResult = response.ResourceSets[0].Resources[0] as BingMapsRESTToolkit.Location;
-                    DailyBingEntry entry = new DailyBingEntry()
+                    DailyChallengeEntry entry = new DailyChallengeEntry()
                     {
-                        BingResponse = locationResult.Name,
+                        imageResponse = locationResult.Name,
                         longitude = float.Parse(locationResult.Point.Coordinates[0].ToString()),
                         latitude = float.Parse(locationResult.Point.Coordinates[1].ToString())
                     };

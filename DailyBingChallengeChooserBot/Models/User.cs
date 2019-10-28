@@ -9,7 +9,7 @@ using System.Text.RegularExpressions;
 using Newtonsoft.Json.Linq;
 using Microsoft.Bot.Builder.Dialogs;
 
-namespace DailyBingChallengeBot.Models
+namespace WhereOnEarthBot.Models
 {
     [Serializable]
     public class User

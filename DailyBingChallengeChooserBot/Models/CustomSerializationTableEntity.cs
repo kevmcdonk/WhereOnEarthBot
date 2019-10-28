@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
-namespace DailyBingChallengeBot.Models
+namespace WhereOnEarthBot.Models
 {
     public class CustomSerializationTableEntity : TableEntity
     {

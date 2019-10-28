@@ -3,3 +3,6 @@
 ################################################################################
 
 /.vs/WhereOnEarthBot/v16
+/.vs/WhereOnEarthBot/DesignTimeBuild
+/DailyBingChallengeBot.Tests/bin/Release/netcoreapp2.1
+/DailyBingChallengeBotDeployment/bin/Release/staging/WhereOnEarthBotDeployment

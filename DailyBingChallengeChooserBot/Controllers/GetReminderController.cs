@@ -19,7 +19,7 @@ using Microsoft.BotBuilderSamples.Dialogs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace DailyBingChallengeBot.Controllers
+namespace WhereOnEarthBot.Controllers
 {
     [Route("api/getreminder")]
     [ApiController]

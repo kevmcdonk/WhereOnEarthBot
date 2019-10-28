@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "botName": {
-      "value": "BingBotDev"
+      "value": "WhereOnEarthBot"
     },
     "botIconUrl": {
       "value": "https://docs.botframework.com/static/devportal/client/images/bot-framework-default.png"
@@ -16,6 +16,12 @@
     },
     "resourceLocation": {
       "value": "westeurope"
+    },
+    "bingMapsAPI": {
+      "value": ""
+    },
+    "googleMapsAPI": {
+      "value": ""
     }
   }
 }
