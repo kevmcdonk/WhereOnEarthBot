@@ -1,0 +1,1046 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "botName": {
+      "type": "string"
+    },
+    "botIconUrl": {
+      "type": "string"
+    },
+    "botAppId": {
+      "type": "string"
+    },
+    "botAppPassword": {
+      "type": "string"
+    },
+    "resourceLocation": {
+      "defaultValue": "westeurope",
+      "type": "string"
+    },
+    "bingMapsAPI": {
+      "defaultValue": "",
+      "type": "string"
+    },
+    "googleMapsAPI": {
+      "defaultValue": "",
+      "type": "string"
+    }
+  },
+  "variables": {
+    "sites_whereonearthbot_name": "[concat(parameters('botName'),'Web')]",
+    "sites_whereonearthbot_url": "[concat(parameters('botName'),'Web')]",
+    "botServices_endpoint": "[concat('https://', variables('sites_whereonearthbot_url'),'.azurewebsites.net/api/messages')]",
+    "appInsights_name": "[concat('appInsights-',parameters('botName'))]",
+    "storageAccounts_name": "[toLower(concat('storage',parameters('botName')))]",
+    "azureTables_name": "azureTables",
+    "appServicePlan_name": "[concat('appServicePlan-',parameters('botName'))]",
+    "vault_name": "[concat('vault-',parameters('botName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2016-10-01",
+      "name": "[variables('vault_name')]",
+      "location": "westeurope",
+      "properties": {
+        "sku": {
+          "family": "A",
+          "name": "Standard"
+        },
+        "tenantId": "[subscription().tenantId]",
+        "enabledForDeployment": false,
+        "enabledForDiskEncryption": false,
+        "enabledForTemplateDeployment": false,
+        "accessPolicies": []
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2016-10-01",
+      "name": "[concat(variables('vault_name'), '/BingMapsAPI')]",
+      "location": "westeurope",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
+      ],
+      "properties": {
+        "attributes": {
+          "enabled": true
+        },
+        "value": "[parameters('BingMapsAPI')]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2016-10-01",
+      "name": "[concat(variables('vault_name'), '/BotId')]",
+      "location": "westeurope",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
+      ],
+      "properties": {
+        "attributes": {
+          "enabled": true
+        },
+        "value": "[parameters('botAppId')]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2016-10-01",
+      "name": "[concat(variables('vault_name'), '/BotName')]",
+      "location": "westeurope",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
+      ],
+      "properties": {
+        "attributes": {
+          "enabled": true
+        },
+        "value": "[parameters('botName')]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2016-10-01",
+      "name": "[concat(variables('vault_name'), '/BotStateContainer')]",
+      "location": "westeurope",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
+      ],
+      "properties": {
+        "attributes": {
+          "enabled": true
+        },
+        "value": "dailychallenge"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2016-10-01",
+      "name": "[concat(variables('vault_name'), '/DailyChallengeTableName')]",
+      "location": "westeurope",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
+      ],
+      "properties": {
+        "attributes": {
+          "enabled": true
+        },
+        "value": "DailyChallenge"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2016-10-01",
+      "name": "[concat(variables('vault_name'), '/GoogleMapsAPI')]",
+      "location": "westeurope",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
+      ],
+      "properties": {
+        "attributes": {
+          "enabled": true
+        },
+        "value": "[parameters('googleMapsAPI')]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2016-10-01",
+      "name": "[concat(variables('vault_name'), '/MicrosoftAppId')]",
+      "location": "westeurope",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
+      ],
+      "properties": {
+        "attributes": {
+          "enabled": true
+        },
+        "value": "[parameters('botAppId')]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2016-10-01",
+      "name": "[concat(variables('vault_name'), '/MicrosoftAppPassword')]",
+      "location": "westeurope",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
+      ],
+      "properties": {
+        "attributes": {
+          "enabled": true
+        },
+        "value": "[parameters('botAppPassword')]"
+      }
+    },
+    {
+      "type": "Microsoft.BotService/botServices",
+      "apiVersion": "2018-07-12",
+      "name": "[parameters('botName')]",
+      "location": "global",
+      "sku": {
+        "name": "F0"
+      },
+      "kind": "bot",
+      "properties": {
+        "displayName": "[parameters('botName')]",
+        "iconUrl": "[parameters('botIconUrl')]",
+        "msaAppId": "[parameters('botAppId')]",
+        "luisAppIds": [],
+        "endpoint": "[variables('botServices_endpoint')]"
+      }
+    },
+    {
+      "type": "microsoft.insights/components",
+      "apiVersion": "2015-05-01",
+      "name": "[variables('appInsights_name')]",
+      "location": "[parameters('resourceLocation')]",
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web",
+        "Flow_Type": "Redfield",
+        "Request_Source": "IbizaAIExtension"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-04-01",
+      "name": "[variables('storageAccounts_name')]",
+      "location": "[parameters('resourceLocation')]",
+      "sku": {
+        "name": "Standard_LRS",
+        "tier": "Standard"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "virtualNetworkRules": [],
+          "ipRules": [],
+          "defaultAction": "Allow"
+        },
+        "supportsHttpsTrafficOnly": true,
+        "encryption": {
+          "services": {
+            "file": {
+              "enabled": true
+            },
+            "blob": {
+              "enabled": true
+            }
+          },
+          "keySource": "Microsoft.Storage"
+        },
+        "accessTier": "Hot"
+      }
+    },
+    {
+      "type": "Microsoft.Web/connections",
+      "apiVersion": "2016-06-01",
+      "name": "[variables('azureTables_name')]",
+      "location": "[parameters('resourceLocation')]",
+      "properties": {
+        "displayName": "BingBot",
+        "customParameterValues": {},
+        "api": {
+          "id": "[concat('/subscriptions/',subscription().subscriptionId,'/providers/Microsoft.Web/locations/',parameters('resourceLocation'),'/managedApis/', variables('azureTables_name'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2016-10-01",
+      "name": "[concat(variables('vault_name'), '/BotStateStorageAccount')]",
+      "location": "westeurope",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
+      ],
+      "properties": {
+        "attributes": {
+          "enabled": true
+        },
+        "value": "[Concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccounts_name'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccounts_name')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value)]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2016-10-01",
+      "name": "[concat(variables('vault_name'), '/DailyChallengeTableConnectionString')]",
+      "location": "westeurope",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
+      ],
+      "properties": {
+        "attributes": {
+          "enabled": true
+        },
+        "value": "[Concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccounts_name'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccounts_name')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value)]"
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2016-09-01",
+      "name": "[variables('appServicePlan_name')]",
+      "location": "West Europe",
+      "sku": {
+        "name": "F1",
+        "tier": "Free",
+        "size": "F1",
+        "family": "F",
+        "capacity": 0
+      },
+      "kind": "app",
+      "properties": {
+        "name": "[variables('appServicePlan_name')]",
+        "perSiteScaling": false,
+        "reserved": false,
+        "targetWorkerCount": 0,
+        "targetWorkerSizeId": 0
+      }
+    },
+    {
+      "type": "Microsoft.BotService/botServices/channels",
+      "apiVersion": "2018-07-12",
+      "name": "[concat(parameters('botName'), '/MsTeamsChannel')]",
+      "location": "global",
+      "dependsOn": [
+        "[resourceId('Microsoft.BotService/botServices', parameters('botName'))]"
+      ],
+      "properties": {
+        "channelName": "MsTeamsChannel"
+      }
+    },
+    {
+      "type": "Microsoft.BotService/botServices/channels",
+      "apiVersion": "2018-07-12",
+      "name": "[concat(parameters('botName'), '/WebChatChannel')]",
+      "location": "global",
+      "dependsOn": [
+        "[resourceId('Microsoft.BotService/botServices', parameters('botName'))]"
+      ],
+      "properties": {
+        "channelName": "WebChatChannel"
+      }
+    },
+    {
+      "type": "Microsoft.Logic/workflows",
+      "apiVersion": "2017-07-01",
+      "name": "CheckDailyChallengeChallengeResults",
+      "location": "[parameters('resourceLocation')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/connections', variables('azureTables_name'))]"
+      ],
+      "properties": {
+        "state": "Enabled",
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "$connections": {
+              "defaultValue": {},
+              "type": "Object"
+            }
+          },
+          "triggers": {
+            "Recurrence": {
+              "recurrence": {
+                "frequency": "Week",
+                "interval": 1,
+                "schedule": {
+                  "hours": [
+                    "15"
+                  ],
+                  "minutes": [
+                    0
+                  ],
+                  "weekDays": [
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday"
+                  ]
+                }
+              },
+              "type": "Recurrence"
+            }
+          },
+          "actions": {
+            "Check_if_result_occured": {
+              "actions": {
+                "HTTP": {
+                  "runAfter": {},
+                  "type": "Http",
+                  "inputs": {
+                    "method": "GET",
+                    "uri": "[concat('https://',variables('sites_whereonearthbot_name'),'.azurewebsites.net/api/getresults')]"
+                  }
+                }
+              },
+              "runAfter": {
+                "Parse_JSON": [
+                  "Succeeded"
+                ]
+              },
+              "expression": {
+                "and": [
+                  {
+                    "not": {
+                      "equals": [
+                        "@body('Parse_JSON')?['photoUrl']",
+                        ""
+                      ]
+                    }
+                  }
+                ]
+              },
+              "type": "If"
+            },
+            "Get_Daily_Bing": {
+              "runAfter": {},
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['azuretables']['connectionId']"
+                  }
+                },
+                "method": "get",
+                "path": "/Tables/@{encodeURIComponent('DailyChallenge')}/entities(PartitionKey='@{encodeURIComponent('DailyChallengeChallengeBot.Models.DailyChallenge')}',RowKey='@{encodeURIComponent(formatDateTime(utcNow(),'yyyyMMdd'))}')"
+              }
+            },
+            "Parse_JSON": {
+              "runAfter": {
+                "Get_Daily_Bing": [
+                  "Succeeded"
+                ]
+              },
+              "type": "ParseJson",
+              "inputs": {
+                "content": "@body('Get_Daily_Bing')",
+                "schema": {
+                  "properties": {
+                    "PartitionKey": {
+                      "type": "string"
+                    },
+                    "RowKey": {
+                      "type": "string"
+                    },
+                    "SerializedEntries": {
+                      "type": "string"
+                    },
+                    "Timestamp": {
+                      "type": "string"
+                    },
+                    "distanceToEntry": {
+                      "type": "number"
+                    },
+                    "extractedLocation": {
+                      "type": "string"
+                    },
+                    "latitude": {
+                      "type": "number"
+                    },
+                    "longitude": {
+                      "type": "number"
+                    },
+                    "odata.etag": {
+                      "type": "string"
+                    },
+                    "odata.metadata": {
+                      "type": "string"
+                    },
+                    "photoUrl": {
+                      "type": "string"
+                    },
+                    "publishedTime": {
+                      "type": "string"
+                    },
+                    "publishedTime@odata.type": {
+                      "type": "string"
+                    },
+                    "resultSet": {
+                      "type": "boolean"
+                    },
+                    "serializableCurrentStatus": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "outputs": {}
+        },
+        "parameters": {
+          "$connections": {
+            "value": {
+              "azuretables": {
+                "connectionId": "[resourceId('Microsoft.Web/connections', variables('azureTables_name'))]",
+                "connectionName": "azuretables",
+                "id": "/subscriptions/',subscription().subscriptionId,'/providers/Microsoft.Web/locations/parameters('resourceLocation')/managedApis/azuretables"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Logic/workflows",
+      "apiVersion": "2017-07-01",
+      "name": "SendDailyChallengeReminder",
+      "location": "westeurope",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/connections', variables('azureTables_name'))]"
+      ],
+      "properties": {
+        "state": "Enabled",
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "$connections": {
+              "defaultValue": {},
+              "type": "Object"
+            }
+          },
+          "triggers": {
+            "Recurrence": {
+              "recurrence": {
+                "frequency": "Week",
+                "interval": 1,
+                "schedule": {
+                  "hours": [
+                    "12"
+                  ],
+                  "minutes": [
+                    30
+                  ],
+                  "weekDays": [
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday"
+                  ]
+                }
+              },
+              "type": "Recurrence"
+            }
+          },
+          "actions": {
+            "Check_if_result_occured": {
+              "actions": {
+                "HTTP": {
+                  "runAfter": {},
+                  "type": "Http",
+                  "inputs": {
+                    "method": "GET",
+                    "uri": "[concat('https://',variables('sites_whereonearthbot_name'),'.azurewebsites.net/api/getreminder')]"
+                  }
+                }
+              },
+              "runAfter": {
+                "Parse_JSON": [
+                  "Succeeded"
+                ]
+              },
+              "expression": {
+                "and": [
+                  {
+                    "not": {
+                      "equals": [
+                        "@body('Parse_JSON')?['photoUrl']",
+                        ""
+                      ]
+                    }
+                  }
+                ]
+              },
+              "type": "If"
+            },
+            "Get_Daily_Bing": {
+              "runAfter": {},
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['azuretables']['connectionId']"
+                  }
+                },
+                "method": "get",
+                "path": "/Tables/@{encodeURIComponent('DailyChallenge')}/entities(PartitionKey='@{encodeURIComponent('DailyChallengeChallengeBot.Models.DailyChallenge')}',RowKey='@{encodeURIComponent(formatDateTime(utcNow(),'yyyyMMdd'))}')"
+              }
+            },
+            "Parse_JSON": {
+              "runAfter": {
+                "Get_Daily_Bing": [
+                  "Succeeded"
+                ]
+              },
+              "type": "ParseJson",
+              "inputs": {
+                "content": "@body('Get_Daily_Bing')",
+                "schema": {
+                  "properties": {
+                    "PartitionKey": {
+                      "type": "string"
+                    },
+                    "RowKey": {
+                      "type": "string"
+                    },
+                    "SerializedEntries": {
+                      "type": "string"
+                    },
+                    "Timestamp": {
+                      "type": "string"
+                    },
+                    "distanceToEntry": {
+                      "type": "number"
+                    },
+                    "extractedLocation": {
+                      "type": "string"
+                    },
+                    "latitude": {
+                      "type": "number"
+                    },
+                    "longitude": {
+                      "type": "number"
+                    },
+                    "odata.etag": {
+                      "type": "string"
+                    },
+                    "odata.metadata": {
+                      "type": "string"
+                    },
+                    "photoUrl": {
+                      "type": "string"
+                    },
+                    "publishedTime": {
+                      "type": "string"
+                    },
+                    "publishedTime@odata.type": {
+                      "type": "string"
+                    },
+                    "resultSet": {
+                      "type": "boolean"
+                    },
+                    "serializableCurrentStatus": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "outputs": {}
+        },
+        "parameters": {
+          "$connections": {
+            "value": {
+              "azuretables": {
+                "connectionId": "[resourceId('Microsoft.Web/connections', variables('azureTables_name'))]",
+                "connectionName": "azuretables",
+                "id": "/subscriptions/a7d89d81-c45f-42f8-8b42-359d5f5e5386/providers/Microsoft.Web/locations/westeurope/managedApis/azuretables"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Logic/workflows",
+      "apiVersion": "2017-07-01",
+      "name": "TriggerDailyChallengeChallenge",
+      "location": "[parameters('resourceLocation')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/connections', variables('azureTables_name'))]"
+      ],
+      "properties": {
+        "state": "Enabled",
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "$connections": {
+              "defaultValue": {},
+              "type": "Object"
+            }
+          },
+          "triggers": {
+            "Recurrence": {
+              "recurrence": {
+                "frequency": "Week",
+                "interval": 1,
+                "schedule": {
+                  "hours": [
+                    "7"
+                  ],
+                  "minutes": [
+                    45
+                  ],
+                  "weekDays": [
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday"
+                  ]
+                }
+              },
+              "type": "Recurrence"
+            }
+          },
+          "actions": {
+            "Get_current_image": {
+              "runAfter": {},
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['azuretables']['connectionId']"
+                  }
+                },
+                "method": "get",
+                "path": "/Tables/@{encodeURIComponent('DailyChallenge')}/entities(PartitionKey='@{encodeURIComponent('DailyChallengeChallengeBot.Models.DailyChallengeImage')}',RowKey='@{encodeURIComponent(formatDateTime(utcNow(),'yyyyMMdd'))}')"
+              }
+            },
+            "HTTP": {
+              "runAfter": {
+                "Get_current_image": [
+                  "Failed"
+                ]
+              },
+              "type": "Http",
+              "inputs": {
+                "method": "GET",
+                "uri": "[concat('https://', variables('sites_whereonearthbot_name'), '.azurewebsites.net/api/triggerchallenge')]"
+              }
+            }
+          },
+          "outputs": {}
+        },
+        "parameters": {
+          "$connections": {
+            "value": {
+              "azuretables": {
+                "connectionId": "[resourceId('Microsoft.Web/connections', variables('azureTables_name'))]",
+                "connectionName": "azuretables",
+                "id": "[concat('/subscriptions/',subscription().subscriptionId,'/providers/Microsoft.Web/locations/',parameters('resourceLocation'),'/managedApis/azuretables')]"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices",
+      "apiVersion": "2019-04-01",
+      "name": "[concat(variables('storageAccounts_name'), '/default')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccounts_name'))]"
+      ],
+      "properties": {
+        "cors": {
+          "corsRules": []
+        },
+        "deleteRetentionPolicy": {
+          "enabled": false
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2016-08-01",
+      "name": "[variables('sites_whereonearthbot_name')]",
+      "location": "West Europe",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlan_name'))]"
+      ],
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "kind": "app",
+      "properties": {
+        "enabled": true,
+        "hostNameSslStates": [
+          {
+            "name": "[concat(parameters('botName'), '.azurewebsites.net')]",
+            "sslState": "Disabled",
+            "hostType": "Standard"
+          },
+          {
+            "name": "[concat(parameters('botName'), '.scm.azurewebsites.net')]",
+            "sslState": "Disabled",
+            "hostType": "Repository"
+          }
+        ],
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('appInsights_name')), '2015-05-01').InstrumentationKey]"
+            },
+            {
+              "name": "BotId",
+              "value": "[parameters('botAppId')]"
+            },
+            {
+              "name": "BotName",
+              "value": "[parameters('botName')]"
+            },
+            {
+              "name": "BotStateContainer",
+              "value": "dailychallenge"
+            },
+            {
+              "name": "BotStateStorageAccount",
+              "value": "[Concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccounts_name'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccounts_name')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value)]"
+            },
+            {
+              "name": "DailyChallengeTableConnectionString",
+              "value": "[Concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccounts_name'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccounts_name')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value)]"
+            },
+            {
+              "name": "DailyChallengeTableName",
+              "value": "DailyChallenge"
+            },
+            {
+              "name": "MicrosoftAppId",
+              "value": "[parameters('botAppId')]"
+            },
+            {
+              "name": "MicrosoftAppPassword",
+              "value": "[parameters('botAppPassword')]"
+            },
+            {
+              "name": "WEBSITE_NODE_DEFAULT_VERSION",
+              "value": "10.14.1"
+            }
+          ]
+        },
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlan_name'))]",
+        "reserved": false,
+        "scmSiteAlsoStopped": false,
+        "clientAffinityEnabled": true,
+        "clientCertEnabled": false,
+        "hostNamesDisabled": false,
+        "containerSize": 0,
+        "dailyMemoryTimeQuota": 0,
+        "httpsOnly": false
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites/config",
+      "apiVersion": "2016-08-01",
+      "name": "[concat(variables('sites_whereonearthbot_name'), '/web')]",
+      "location": "West Europe",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('sites_whereonearthbot_name'))]"
+      ],
+      "properties": {
+        "numberOfWorkers": 1,
+        "defaultDocuments": [
+          "Default.htm",
+          "Default.html",
+          "Default.asp",
+          "index.htm",
+          "index.html",
+          "iisstart.htm",
+          "default.aspx",
+          "index.php",
+          "hostingstart.html"
+        ],
+        "netFrameworkVersion": "v4.0",
+        "phpVersion": "5.6",
+        "pythonVersion": "",
+        "nodeVersion": "",
+        "linuxFxVersion": "",
+        "requestTracingEnabled": false,
+        "remoteDebuggingEnabled": false,
+        "remoteDebuggingVersion": "VS2017",
+        "httpLoggingEnabled": true,
+        "logsDirectorySizeLimit": 35,
+        "detailedErrorLoggingEnabled": true,
+        "publishingUsername": "$whereonearthbotdemo",
+        "scmType": "None",
+        "use32BitWorkerProcess": true,
+        "webSocketsEnabled": false,
+        "alwaysOn": false,
+        "appCommandLine": "",
+        "managedPipelineMode": "Integrated",
+        "virtualApplications": [
+          {
+            "virtualPath": "/",
+            "physicalPath": "site\\wwwroot",
+            "preloadEnabled": false,
+            "virtualDirectories": null
+          }
+        ],
+        "winAuthAdminState": 0,
+        "winAuthTenantState": 0,
+        "customAppPoolIdentityAdminState": false,
+        "customAppPoolIdentityTenantState": false,
+        "loadBalancing": "LeastRequests",
+        "routingRules": [],
+        "experiments": {
+          "rampUpRules": []
+        },
+        "autoHealEnabled": false,
+        "vnetName": "",
+        "siteAuthEnabled": false,
+        "siteAuthSettings": {
+          "enabled": null,
+          "unauthenticatedClientAction": null,
+          "tokenStoreEnabled": null,
+          "allowedExternalRedirectUrls": null,
+          "defaultProvider": null,
+          "clientId": null,
+          "clientSecret": null,
+          "clientSecretCertificateThumbprint": null,
+          "issuer": null,
+          "allowedAudiences": null,
+          "additionalLoginParams": null,
+          "isAadAutoProvisioned": false,
+          "googleClientId": null,
+          "googleClientSecret": null,
+          "googleOAuthScopes": null,
+          "facebookAppId": null,
+          "facebookAppSecret": null,
+          "facebookOAuthScopes": null,
+          "twitterConsumerKey": null,
+          "twitterConsumerSecret": null,
+          "microsoftAccountClientId": null,
+          "microsoftAccountClientSecret": null,
+          "microsoftAccountOAuthScopes": null
+        },
+        "cors": {
+          "allowedOrigins": [
+            "https://botservice.hosting.portal.azure.net",
+            "https://botservice-ms.hosting.portal.azure.net",
+            "https://hosting.onecloud.azure-test.net/"
+          ],
+          "supportCredentials": false
+        },
+        "localMySqlEnabled": false,
+        "http20Enabled": false,
+        "minTlsVersion": "1.2",
+        "ftpsState": "AllAllowed",
+        "reservedInstanceCount": 0,
+        "fileChangeAuditEnabled": false
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites/hostNameBindings",
+      "apiVersion": "2016-08-01",
+      "name": "[concat(variables('sites_whereonearthbot_name'), '/', variables('sites_whereonearthbot_name'), '.azurewebsites.net')]",
+      "location": "West Europe",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('sites_whereonearthbot_name'))]"
+      ],
+      "properties": {
+        "siteName": "whereonearthbotdemo",
+        "hostNameType": "Verified"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2019-04-01",
+      "name": "[concat(variables('storageAccounts_name'), '/default/dailychallenge')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccounts_name'), 'default')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccounts_name'))]"
+      ],
+      "properties": {
+        "publicAccess": "None"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2019-04-01",
+      "name": "[concat(variables('storageAccounts_name'), '/default/', variables('storageAccounts_name'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccounts_name'), 'default')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccounts_name'))]"
+      ],
+      "properties": {
+        "publicAccess": "None"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2019-04-01",
+      "name": "[concat(variables('storageAccounts_name'), '/default/dailychallengedev')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccounts_name'), 'default')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccounts_name'))]"
+      ],
+      "properties": {
+        "publicAccess": "None"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2019-04-01",
+      "name": "[concat(variables('storageAccounts_name'), '/default/dailychallengelogs')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccounts_name'), 'default')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccounts_name'))]"
+      ],
+      "properties": {
+        "publicAccess": "None"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/accessPolicies",
+      "apiVersion": "2018-02-14",
+      "name": "[concat(variables('vault_name'),'/add')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('sites_whereonearthbot_name'))]"
+      ],
+      "location": "westeurope",
+      "properties": {
+        "sku": {
+          "family": "A",
+          "name": "Standard"
+        },
+        "tenantId": "[subscription().tenantId]",
+        "accessPolicies": [
+          {
+            "objectId": "[reference(concat(resourceId('Microsoft.Web/sites', variables('sites_whereonearthbot_name')), '/providers/Microsoft.ManagedIdentity/Identities/default'), '2015-08-31-PREVIEW').principalId]",
+            "permissions": {
+              "keys": [
+                "Get",
+                "List"
+              ],
+              "secrets": [
+                "Get",
+                "List",
+                "Set",
+                "Delete",
+                "Recover",
+                "Backup",
+                "Restore"
+              ],
+              "certificates": []
+            },
+            "tenantId": "[subscription().tenantId]"
+          }
+        ],
+        "enabledForDeployment": false,
+        "enabledForDiskEncryption": false,
+        "enabledForTemplateDeployment": false
+      }
+    }
+  ]
+}
