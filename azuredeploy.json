@@ -17,19 +17,164 @@
     "resourceLocation": {
       "defaultValue": "westeurope",
       "type": "string"
+    },
+    "bingMapsAPI": {
+      "defaultValue": "",
+      "type": "string"
+    },
+    "googleMapsAPI": {
+      "defaultValue": "",
+      "type": "string"
     }
   },
   "variables": {
-    "sites_dailybingchallengebot_name": "[concat(parameters('botName'),'Web')]",
-    "sites_dailybingchallengebot_url": "[concat(parameters('botName'),'Web')]",
-    "botServices_endpoint": "[concat('https://', variables('sites_dailybingchallengebot_url'),'.azurewebsites.net/api/messages')]",
+    "sites_whereonearthbot_name": "[concat(parameters('botName'),'Web')]",
+    "sites_whereonearthbot_url": "[concat(parameters('botName'),'Web')]",
+    "botServices_endpoint": "[concat('https://', variables('sites_whereonearthbot_url'),'.azurewebsites.net/api/messages')]",
     "appInsights_name": "[concat('appInsights-',parameters('botName'))]",
     "storageAccounts_name": "[toLower(concat('storage',parameters('botName')))]",
-    "azureTables_name": "azureTables", //"[concat('azureTables-',parameters('botName'))]",
+    "azureTables_name": "azureTables",
     "appServicePlan_name": "[concat('appServicePlan-',parameters('botName'))]",
-    "vault_name": "[concat(parameters('botName'), 'Vault')]"
+    "vault_name": "[concat('vault-',parameters('botName'))]"
   },
   "resources": [
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2016-10-01",
+      "name": "[variables('vault_name')]",
+      "location": "westeurope",
+      "properties": {
+        "sku": {
+          "family": "A",
+          "name": "Standard"
+        },
+        "tenantId": "[subscription().tenantId]",
+        "enabledForDeployment": false,
+        "enabledForDiskEncryption": false,
+        "enabledForTemplateDeployment": false,
+        "accessPolicies": []
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2016-10-01",
+      "name": "[concat(variables('vault_name'), '/BingMapsAPI')]",
+      "location": "westeurope",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
+      ],
+      "properties": {
+        "attributes": {
+          "enabled": true
+        },
+        "value": "[parameters('BingMapsAPI')]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2016-10-01",
+      "name": "[concat(variables('vault_name'), '/BotId')]",
+      "location": "westeurope",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
+      ],
+      "properties": {
+        "attributes": {
+          "enabled": true
+        },
+        "value": "[parameters('botAppId')]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2016-10-01",
+      "name": "[concat(variables('vault_name'), '/BotName')]",
+      "location": "westeurope",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
+      ],
+      "properties": {
+        "attributes": {
+          "enabled": true
+        },
+        "value": "[parameters('botName')]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2016-10-01",
+      "name": "[concat(variables('vault_name'), '/BotStateContainer')]",
+      "location": "westeurope",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
+      ],
+      "properties": {
+        "attributes": {
+          "enabled": true
+        },
+        "value": "dailychallenge"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2016-10-01",
+      "name": "[concat(variables('vault_name'), '/DailyChallengeTableName')]",
+      "location": "westeurope",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
+      ],
+      "properties": {
+        "attributes": {
+          "enabled": true
+        },
+        "value": "DailyChallenge"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2016-10-01",
+      "name": "[concat(variables('vault_name'), '/GoogleMapsAPI')]",
+      "location": "westeurope",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
+      ],
+      "properties": {
+        "attributes": {
+          "enabled": true
+        },
+        "value": "[parameters('googleMapsAPI')]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2016-10-01",
+      "name": "[concat(variables('vault_name'), '/MicrosoftAppId')]",
+      "location": "westeurope",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
+      ],
+      "properties": {
+        "attributes": {
+          "enabled": true
+        },
+        "value": "[parameters('botAppId')]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2016-10-01",
+      "name": "[concat(variables('vault_name'), '/MicrosoftAppPassword')]",
+      "location": "westeurope",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
+      ],
+      "properties": {
+        "attributes": {
+          "enabled": true
+        },
+        "value": "[parameters('botAppPassword')]"
+      }
+    },
     {
       "type": "Microsoft.BotService/botServices",
       "apiVersion": "2018-07-12",
@@ -57,52 +202,6 @@
         "Application_Type": "web",
         "Flow_Type": "Redfield",
         "Request_Source": "IbizaAIExtension"
-      }
-    },
-    {
-      "type": "Microsoft.KeyVault/vaults",
-      "apiVersion": "2016-10-01",
-      "name": "[variables('vault_name')]",
-      "location": "westeurope",
-      "properties": {
-        "sku": {
-          "family": "A",
-          "name": "Standard"
-        },
-        "tenantId": "[subscription().tenantId]",
-        /*TODO: Work out how to set object Id for app service
-        "accessPolicies": [
-          {
-            "tenantId": "3aad59e2-dbed-4fc0-9780-91156f9e0bc4",
-            "objectId": "[subscription().tenantId]",
-            "permissions": {
-              "keys": [
-                "Get",
-                "List",
-                "Update",
-                "Create",
-                "Import",
-                "Delete",
-                "Recover",
-                "Backup",
-                "Restore"
-              ],
-              "secrets": [
-                "Get",
-                "List",
-                "Set",
-                "Delete",
-                "Recover",
-                "Backup",
-                "Restore"
-              ],
-              "certificates": []
-            }
-          }
-        ],*/
-        "enabledForDeployment": false,
-        "enabledForDiskEncryption": false,
-        "enabledForTemplateDeployment": false
       }
     },
     {
@@ -148,6 +247,36 @@
         "api": {
           "id": "[concat('/subscriptions/',subscription().subscriptionId,'/providers/Microsoft.Web/locations/',parameters('resourceLocation'),'/managedApis/', variables('azureTables_name'))]"
         }
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2016-10-01",
+      "name": "[concat(variables('vault_name'), '/BotStateStorageAccount')]",
+      "location": "westeurope",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
+      ],
+      "properties": {
+        "attributes": {
+          "enabled": true
+        },
+        "value": "[Concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccounts_name'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccounts_name')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value)]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2016-10-01",
+      "name": "[concat(variables('vault_name'), '/DailyChallengeTableConnectionString')]",
+      "location": "westeurope",
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
+      ],
+      "properties": {
+        "attributes": {
+          "enabled": true
+        },
+        "value": "[Concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccounts_name'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccounts_name')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value)]"
       }
     },
     {
@@ -198,7 +327,7 @@
     {
       "type": "Microsoft.Logic/workflows",
       "apiVersion": "2017-07-01",
-      "name": "CheckDailyBingChallengeResults",
+      "name": "CheckDailyChallengeChallengeResults",
       "location": "[parameters('resourceLocation')]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/connections', variables('azureTables_name'))]"
@@ -246,7 +375,7 @@
                   "type": "Http",
                   "inputs": {
                     "method": "GET",
-                    "uri": "[concat('https://',variables('sites_dailybingchallengebot_name'),'.azurewebsites.net/api/getresults')]"
+                    "uri": "[concat('https://',variables('sites_whereonearthbot_name'),'.azurewebsites.net/api/getresults')]"
                   }
                 }
               },
@@ -279,7 +408,7 @@
                   }
                 },
                 "method": "get",
-                "path": "/Tables/@{encodeURIComponent('DailyBing')}/entities(PartitionKey='@{encodeURIComponent('DailyBingChallengeBot.Models.DailyBing')}',RowKey='@{encodeURIComponent(formatDateTime(utcNow(),'yyyyMMdd'))}')"
+                "path": "/Tables/@{encodeURIComponent('DailyChallenge')}/entities(PartitionKey='@{encodeURIComponent('DailyChallengeChallengeBot.Models.DailyChallenge')}',RowKey='@{encodeURIComponent(formatDateTime(utcNow(),'yyyyMMdd'))}')"
               }
             },
             "Parse_JSON": {
@@ -355,7 +484,6 @@
               "azuretables": {
                 "connectionId": "[resourceId('Microsoft.Web/connections', variables('azureTables_name'))]",
                 "connectionName": "azuretables",
-                // TODO: update this?
                 "id": "/subscriptions/',subscription().subscriptionId,'/providers/Microsoft.Web/locations/parameters('resourceLocation')/managedApis/azuretables"
               }
             }
@@ -366,7 +494,7 @@
     {
       "type": "Microsoft.Logic/workflows",
       "apiVersion": "2017-07-01",
-      "name": "SendDailyBingReminder",
+      "name": "SendDailyChallengeReminder",
       "location": "westeurope",
       "dependsOn": [
         "[resourceId('Microsoft.Web/connections', variables('azureTables_name'))]"
@@ -414,7 +542,7 @@
                   "type": "Http",
                   "inputs": {
                     "method": "GET",
-                    "uri": "[concat('https://',variables('sites_dailybingchallengebot_name'),'.azurewebsites.net/api/getreminder')]"
+                    "uri": "[concat('https://',variables('sites_whereonearthbot_name'),'.azurewebsites.net/api/getreminder')]"
                   }
                 }
               },
@@ -447,7 +575,7 @@
                   }
                 },
                 "method": "get",
-                "path": "/Tables/@{encodeURIComponent('DailyBing')}/entities(PartitionKey='@{encodeURIComponent('DailyBingChallengeBot.Models.DailyBing')}',RowKey='@{encodeURIComponent(formatDateTime(utcNow(),'yyyyMMdd'))}')"
+                "path": "/Tables/@{encodeURIComponent('DailyChallenge')}/entities(PartitionKey='@{encodeURIComponent('DailyChallengeChallengeBot.Models.DailyChallenge')}',RowKey='@{encodeURIComponent(formatDateTime(utcNow(),'yyyyMMdd'))}')"
               }
             },
             "Parse_JSON": {
@@ -533,7 +661,7 @@
     {
       "type": "Microsoft.Logic/workflows",
       "apiVersion": "2017-07-01",
-      "name": "TriggerDailyBingChallenge",
+      "name": "TriggerDailyChallengeChallenge",
       "location": "[parameters('resourceLocation')]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/connections', variables('azureTables_name'))]"
@@ -584,7 +712,7 @@
                   }
                 },
                 "method": "get",
-                "path": "/Tables/@{encodeURIComponent('DailyBing')}/entities(PartitionKey='@{encodeURIComponent('DailyBingChallengeBot.Models.DailyBingImage')}',RowKey='@{encodeURIComponent(formatDateTime(utcNow(),'yyyyMMdd'))}')"
+                "path": "/Tables/@{encodeURIComponent('DailyChallenge')}/entities(PartitionKey='@{encodeURIComponent('DailyChallengeChallengeBot.Models.DailyChallengeImage')}',RowKey='@{encodeURIComponent(formatDateTime(utcNow(),'yyyyMMdd'))}')"
               }
             },
             "HTTP": {
@@ -596,7 +724,7 @@
               "type": "Http",
               "inputs": {
                 "method": "GET",
-                "uri": "[concat('https://', variables('sites_dailybingchallengebot_name'), '.azurewebsites.net/api/triggerchallenge')]"
+                "uri": "[concat('https://', variables('sites_whereonearthbot_name'), '.azurewebsites.net/api/triggerchallenge')]"
               }
             }
           },
@@ -634,11 +762,14 @@
     {
       "type": "Microsoft.Web/sites",
       "apiVersion": "2016-08-01",
-      "name": "[variables('sites_dailybingchallengebot_name')]",
+      "name": "[variables('sites_whereonearthbot_name')]",
       "location": "West Europe",
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlan_name'))]"
       ],
+      "identity": {
+        "type": "SystemAssigned"
+      },
       "kind": "app",
       "properties": {
         "enabled": true,
@@ -670,19 +801,19 @@
             },
             {
               "name": "BotStateContainer",
-              "value": "dailybing"
+              "value": "dailychallenge"
             },
             {
               "name": "BotStateStorageAccount",
               "value": "[Concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccounts_name'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccounts_name')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value)]"
             },
             {
-              "name": "DailyBingTableConnectionString",
+              "name": "DailyChallengeTableConnectionString",
               "value": "[Concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccounts_name'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccounts_name')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value)]"
             },
             {
-              "name": "DailyBingTableName",
-              "value": "DailyBing"
+              "name": "DailyChallengeTableName",
+              "value": "DailyChallenge"
             },
             {
               "name": "MicrosoftAppId",
@@ -712,10 +843,10 @@
     {
       "type": "Microsoft.Web/sites/config",
       "apiVersion": "2016-08-01",
-      "name": "[concat(variables('sites_dailybingchallengebot_name'), '/web')]",
+      "name": "[concat(variables('sites_whereonearthbot_name'), '/web')]",
       "location": "West Europe",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', variables('sites_dailybingchallengebot_name'))]"
+        "[resourceId('Microsoft.Web/sites', variables('sites_whereonearthbot_name'))]"
       ],
       "properties": {
         "numberOfWorkers": 1,
@@ -741,7 +872,7 @@
         "httpLoggingEnabled": true,
         "logsDirectorySizeLimit": 35,
         "detailedErrorLoggingEnabled": true,
-        "publishingUsername": "$dailybingchallengebotdemo",
+        "publishingUsername": "$whereonearthbotdemo",
         "scmType": "None",
         "use32BitWorkerProcess": true,
         "webSocketsEnabled": false,
@@ -812,20 +943,20 @@
     {
       "type": "Microsoft.Web/sites/hostNameBindings",
       "apiVersion": "2016-08-01",
-      "name": "[concat(variables('sites_dailybingchallengebot_name'), '/', variables('sites_dailybingchallengebot_name'), '.azurewebsites.net')]",
+      "name": "[concat(variables('sites_whereonearthbot_name'), '/', variables('sites_whereonearthbot_name'), '.azurewebsites.net')]",
       "location": "West Europe",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', variables('sites_dailybingchallengebot_name'))]"
+        "[resourceId('Microsoft.Web/sites', variables('sites_whereonearthbot_name'))]"
       ],
       "properties": {
-        "siteName": "dailybingchallengebotdemo",
+        "siteName": "whereonearthbotdemo",
         "hostNameType": "Verified"
       }
     },
     {
       "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
       "apiVersion": "2019-04-01",
-      "name": "[concat(variables('storageAccounts_name'), '/default/dailybing')]",
+      "name": "[concat(variables('storageAccounts_name'), '/default/dailychallenge')]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccounts_name'), 'default')]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccounts_name'))]"
@@ -849,7 +980,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
       "apiVersion": "2019-04-01",
-      "name": "[concat(variables('storageAccounts_name'), '/default/dailybingdev')]",
+      "name": "[concat(variables('storageAccounts_name'), '/default/dailychallengedev')]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccounts_name'), 'default')]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccounts_name'))]"
@@ -861,13 +992,54 @@
     {
       "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
       "apiVersion": "2019-04-01",
-      "name": "[concat(variables('storageAccounts_name'), '/default/dailybinglogs')]",
+      "name": "[concat(variables('storageAccounts_name'), '/default/dailychallengelogs')]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccounts_name'), 'default')]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccounts_name'))]"
       ],
       "properties": {
         "publicAccess": "None"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/accessPolicies",
+      "apiVersion": "2018-02-14",
+      "name": "[concat(variables('vault_name'),'/add')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('sites_whereonearthbot_name'))]"
+      ],
+      "location": "westeurope",
+      "properties": {
+        "sku": {
+          "family": "A",
+          "name": "Standard"
+        },
+        "tenantId": "[subscription().tenantId]",
+        "accessPolicies": [
+          {
+            "objectId": "[reference(concat(resourceId('Microsoft.Web/sites', variables('sites_whereonearthbot_name')), '/providers/Microsoft.ManagedIdentity/Identities/default'), '2015-08-31-PREVIEW').principalId]",
+            "permissions": {
+              "keys": [
+                "Get",
+                "List"
+              ],
+              "secrets": [
+                "Get",
+                "List",
+                "Set",
+                "Delete",
+                "Recover",
+                "Backup",
+                "Restore"
+              ],
+              "certificates": []
+            },
+            "tenantId": "[subscription().tenantId]"
+          }
+        ],
+        "enabledForDeployment": false,
+        "enabledForDiskEncryption": false,
+        "enabledForTemplateDeployment": false
       }
     }
   ]

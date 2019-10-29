@@ -1,1 +1,0 @@
-C:\sourcecode\NonClient\DailyBingChallengeBot\DailyBingChallengeBotDeployment\obj\Debug\DailyBingChallengeBotDeployment.deployproj.CoreCompileInputs.cache
