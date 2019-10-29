@@ -652,7 +652,7 @@
               "azuretables": {
                 "connectionId": "[resourceId('Microsoft.Web/connections', variables('azureTables_name'))]",
                 "connectionName": "azuretables",
-                "id": "[concat('/subscriptions/a7d89d81-c45f-42f8-8b42-359d5f5e5386/providers/Microsoft.Web/locations/',[parameters('resourceLocation')],'/managedApis/azuretables"
+                "id": "[concat('/subscriptions/',subscription().subscriptionId,'/providers/Microsoft.Web/locations/',parameters('resourceLocation'),'/managedApis/azuretables')]"
               }
             }
           }
