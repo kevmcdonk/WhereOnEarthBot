@@ -825,6 +825,10 @@
               "value": "DailyChallenge"
             },
             {
+              "name": "KeyVaultName",
+              "value": "[variables('vault_name')]"
+            },
+            {
               "name": "MicrosoftAppId",
               "value": "[parameters('botAppId')]"
             },
