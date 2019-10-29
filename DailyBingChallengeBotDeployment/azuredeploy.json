@@ -16,7 +16,7 @@
       "type": "string"
     },
     "resourceLocation": {
-      "defaultValue": "[parameters('resourceLocation')]",
+      "defaultValue": "westeurope",
       "type": "string"
     },
     "bingMapsAPI": {
@@ -43,7 +43,7 @@
       "type": "Microsoft.KeyVault/vaults",
       "apiVersion": "2016-10-01",
       "name": "[variables('vault_name')]",
-      "location": "[parameters('defaultLocation')]",
+      "location": "[parameters('resourceLocation')]",
       "properties": {
         "sku": {
           "family": "A",
