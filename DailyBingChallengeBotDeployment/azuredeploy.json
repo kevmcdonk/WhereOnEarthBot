@@ -6,7 +6,8 @@
       "type": "string"
     },
     "botIconUrl": {
-      "type": "string"
+      "type": "string",
+      "defaultValue": "https://docs.botframework.com/static/devportal/client/images/bot-framework-default.png"
     },
     "botAppId": {
       "type": "string"
@@ -15,7 +16,7 @@
       "type": "string"
     },
     "resourceLocation": {
-      "defaultValue": "westeurope",
+      "defaultValue": "[parameters('resourceLocation')]",
       "type": "string"
     },
     "bingMapsAPI": {
@@ -42,7 +43,7 @@
       "type": "Microsoft.KeyVault/vaults",
       "apiVersion": "2016-10-01",
       "name": "[variables('vault_name')]",
-      "location": "westeurope",
+      "location": "[parameters('defaultLocation')]",
       "properties": {
         "sku": {
           "family": "A",
@@ -59,7 +60,7 @@
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2016-10-01",
       "name": "[concat(variables('vault_name'), '/BingMapsAPI')]",
-      "location": "westeurope",
+      "location": "[parameters('resourceLocation')]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
       ],
@@ -74,7 +75,7 @@
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2016-10-01",
       "name": "[concat(variables('vault_name'), '/BotId')]",
-      "location": "westeurope",
+      "location": "[parameters('resourceLocation')]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
       ],
@@ -89,7 +90,7 @@
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2016-10-01",
       "name": "[concat(variables('vault_name'), '/BotName')]",
-      "location": "westeurope",
+      "location": "[parameters('resourceLocation')]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
       ],
@@ -104,7 +105,7 @@
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2016-10-01",
       "name": "[concat(variables('vault_name'), '/BotStateContainer')]",
-      "location": "westeurope",
+      "location": "[parameters('resourceLocation')]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
       ],
@@ -119,7 +120,7 @@
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2016-10-01",
       "name": "[concat(variables('vault_name'), '/DailyChallengeTableName')]",
-      "location": "westeurope",
+      "location": "[parameters('resourceLocation')]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
       ],
@@ -134,7 +135,7 @@
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2016-10-01",
       "name": "[concat(variables('vault_name'), '/GoogleMapsAPI')]",
-      "location": "westeurope",
+      "location": "[parameters('resourceLocation')]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
       ],
@@ -149,7 +150,7 @@
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2016-10-01",
       "name": "[concat(variables('vault_name'), '/MicrosoftAppId')]",
-      "location": "westeurope",
+      "location": "[parameters('resourceLocation')]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
       ],
@@ -164,7 +165,7 @@
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2016-10-01",
       "name": "[concat(variables('vault_name'), '/MicrosoftAppPassword')]",
-      "location": "westeurope",
+      "location": "[parameters('resourceLocation')]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
       ],
@@ -253,7 +254,7 @@
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2016-10-01",
       "name": "[concat(variables('vault_name'), '/BotStateStorageAccount')]",
-      "location": "westeurope",
+      "location": "[parameters('resourceLocation')]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
       ],
@@ -268,7 +269,7 @@
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2016-10-01",
       "name": "[concat(variables('vault_name'), '/DailyChallengeTableConnectionString')]",
-      "location": "westeurope",
+      "location": "[parameters('resourceLocation')]",
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', variables('vault_name'))]"
       ],
@@ -495,7 +496,7 @@
       "type": "Microsoft.Logic/workflows",
       "apiVersion": "2017-07-01",
       "name": "SendDailyChallengeReminder",
-      "location": "westeurope",
+      "location": "[parameters('resourceLocation')]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/connections', variables('azureTables_name'))]"
       ],
@@ -651,7 +652,7 @@
               "azuretables": {
                 "connectionId": "[resourceId('Microsoft.Web/connections', variables('azureTables_name'))]",
                 "connectionName": "azuretables",
-                "id": "/subscriptions/a7d89d81-c45f-42f8-8b42-359d5f5e5386/providers/Microsoft.Web/locations/westeurope/managedApis/azuretables"
+                "id": "[concat('/subscriptions/a7d89d81-c45f-42f8-8b42-359d5f5e5386/providers/Microsoft.Web/locations/',[parameters('resourceLocation')],'/managedApis/azuretables"
               }
             }
           }
@@ -1008,7 +1009,7 @@
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', variables('sites_whereonearthbot_name'))]"
       ],
-      "location": "westeurope",
+      "location": "[parameters('resourceLocation')]",
       "properties": {
         "sku": {
           "family": "A",
