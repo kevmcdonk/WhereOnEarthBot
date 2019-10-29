@@ -26,6 +26,14 @@
     "googleMapsAPI": {
       "defaultValue": "",
       "type": "string"
+    },
+    "gitRepoUrl": {
+      "defaultValue": "https://github.com/kevmcdonk/WhereOnEarthBot.git",
+      "type": "string"
+    },
+    "gitBranch": {
+      "defaultValue": "master",
+      "type": "string"
     }
   },
   "variables": {
@@ -839,7 +847,22 @@
         "containerSize": 0,
         "dailyMemoryTimeQuota": 0,
         "httpsOnly": false
-      }
+      },
+      "resources": [
+        {
+          "apiVersion": "2015-08-01",
+          "name": "web",
+          "type": "sourcecontrols",
+          "dependsOn": [
+            "[concat('Microsoft.Web/sites/', variables('sites_whereonearthbot_name'))]"
+          ],
+          "properties": {
+            "RepoUrl": "[parameters('gitRepoUrl')]",
+            "branch": "[parameters('gitBranch')]",
+            "IsManualIntegration": true
+          }
+        }
+      ]
     },
     {
       "type": "Microsoft.Web/sites/config",

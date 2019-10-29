@@ -6,3 +6,6 @@
 /.vs/WhereOnEarthBot/DesignTimeBuild
 /DailyBingChallengeBot.Tests/bin/Release/netcoreapp2.1
 /DailyBingChallengeBotDeployment/bin/Release/staging/WhereOnEarthBotDeployment
+/DailyBingChallengeBot.Tests/obj/Release/netcoreapp2.1
+/DailyBingChallengeBot.Tests/obj
+/DailyBingChallengeChooserBot/Properties/PublishProfiles
