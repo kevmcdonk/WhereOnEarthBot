@@ -1,4 +1,5 @@
 ﻿using BingMapsRESTToolkit;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +18,7 @@ namespace WhereOnEarthBot.Services
             BingMapsKey = bingMapsKey;
         }
 
-        public async Task<DailyChallengeEntry> GetLocationDetails(string locationQueryText)
+        public async Task<DailyChallengeEntry> GetLocationDetails(string locationQueryText, ILogger logger)
         {
             try
             {
@@ -54,6 +55,7 @@ namespace WhereOnEarthBot.Services
             }
             catch (Exception exp)
             {
+                logger.LogError("Error retrieving image: " + exp.Message + ":::" + exp.StackTrace);
                 Console.WriteLine("Grrr error: " + exp.Message);
                 return null;
             }

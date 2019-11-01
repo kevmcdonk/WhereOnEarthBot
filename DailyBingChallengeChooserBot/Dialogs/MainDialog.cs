@@ -172,7 +172,19 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                 BingImageService imageService = new BingImageService();
                 DailyChallengeImage image = await tableService.getDailyChallengeImage();
                 BingMapService mapService = new BingMapService(Configuration["BingMapsAPI"]);
-                DailyChallengeEntry challengeEntry = await mapService.GetLocationDetails(image.ImageText);
+                Logger.LogInformation("Image Text: " + image.ImageText);
+                DailyChallengeEntry challengeEntry = await mapService.GetLocationDetails(image.ImageText, Logger);
+
+                if (challengeEntry == null)
+                {
+                    Logger.LogError("Unable to retrieve details of image");
+                    throw new Exception("Unable to retrieve details from Google");
+                }
+                Logger.LogInformation("Image Response: " + challengeEntry.imageResponse);
+                Logger.LogInformation("Longitude: " + challengeEntry.longitude);
+                Logger.LogInformation("Latitude: " + challengeEntry.latitude);
+                Logger.LogInformation("Latitude: " + challengeEntry.distanceFrom);
+
                 var dailyChallenge = await tableService.GetDailyChallenge();
 
                 dailyChallenge.photoUrl = image.Url;

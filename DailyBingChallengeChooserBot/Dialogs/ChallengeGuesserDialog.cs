@@ -127,14 +127,14 @@ namespace Microsoft.BotBuilderSamples.Dialogs
                 TelemetryClient.TrackTrace("Checking for guess: " + guessText, Severity.Information, null);
                 try
                 {
-                    DailyChallengeEntry entry = await mapService.GetLocationDetails(guessText);
+                    DailyChallengeEntry entry = await mapService.GetLocationDetails(guessText, Logger);
                     if (entry == null)
                     {
                         var locationSplit = stepContext.Result.ToString().Split(' ');
                         if (locationSplit.Length > 1)
                         {
                             var searchText = guessText.Substring(guessText.IndexOf(' '));
-                            entry = await mapService.GetLocationDetails(searchText);
+                            entry = await mapService.GetLocationDetails(searchText, Logger);
                         }
                     }
 

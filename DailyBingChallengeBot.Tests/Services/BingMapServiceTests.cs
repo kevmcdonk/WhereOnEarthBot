@@ -25,7 +25,7 @@ namespace WhereOnEarthBot.Tests.Services
             string bingMapsKey = Configuration["BingMapsAPI"];
             System.Console.WriteLine("BingMapsKey: " + bingMapsKey);
             BingMapService service = new BingMapService(bingMapsKey);
-            DailyChallengeEntry entry = await service.GetLocationDetails("Nevada");
+            DailyChallengeEntry entry = await service.GetLocationDetails("Nevada", null);
             Assert.IsTrue(entry.latitude != 0 && entry.longitude != 0);
         }
     }
