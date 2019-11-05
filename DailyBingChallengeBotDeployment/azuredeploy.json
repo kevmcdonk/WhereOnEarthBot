@@ -418,7 +418,7 @@
                   }
                 },
                 "method": "get",
-                "path": "/Tables/@{encodeURIComponent('DailyChallenge')}/entities(PartitionKey='@{encodeURIComponent('DailyChallengeChallengeBot.Models.DailyChallenge')}',RowKey='@{encodeURIComponent(formatDateTime(utcNow(),'yyyyMMdd'))}')"
+                "path": "/Tables/@{encodeURIComponent('DailyChallenge')}/entities(PartitionKey='@{encodeURIComponent('WhereOnEarthBot.Models.DailyChallenge')}',RowKey='@{encodeURIComponent(formatDateTime(utcNow(),'yyyyMMdd'))}')"
               }
             },
             "Parse_JSON": {
@@ -586,7 +586,7 @@
                   }
                 },
                 "method": "get",
-                "path": "/Tables/@{encodeURIComponent('DailyChallenge')}/entities(PartitionKey='@{encodeURIComponent('DailyChallengeChallengeBot.Models.DailyChallenge')}',RowKey='@{encodeURIComponent(formatDateTime(utcNow(),'yyyyMMdd'))}')"
+                "path": "/Tables/@{encodeURIComponent('DailyChallenge')}/entities(PartitionKey='@{encodeURIComponent('WhereOnEarthBot.Models.DailyChallenge')}',RowKey='@{encodeURIComponent(formatDateTime(utcNow(),'yyyyMMdd'))}')"
               }
             },
             "Parse_JSON": {
@@ -724,7 +724,7 @@
                   }
                 },
                 "method": "get",
-                "path": "/Tables/@{encodeURIComponent('DailyChallenge')}/entities(PartitionKey='@{encodeURIComponent('DailyChallengeChallengeBot.Models.DailyChallengeImage')}',RowKey='@{encodeURIComponent(formatDateTime(utcNow(),'yyyyMMdd'))}')"
+                "path": "/Tables/@{encodeURIComponent('DailyChallenge')}/entities(PartitionKey='@{encodeURIComponent('WhereOnEarthBot.Models.DailyChallengeImage')}',RowKey='@{encodeURIComponent(formatDateTime(utcNow(),'yyyyMMdd'))}')"
               }
             },
             "HTTP": {
