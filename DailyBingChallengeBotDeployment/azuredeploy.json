@@ -359,7 +359,7 @@
                 "interval": 1,
                 "schedule": {
                   "hours": [
-                    "15"
+                    "16"
                   ],
                   "minutes": [
                     0
@@ -371,7 +371,8 @@
                     "Thursday",
                     "Friday"
                   ]
-                }
+                },
+                "timeZone": "GMT Standard Time"
               },
               "type": "Recurrence"
             }
@@ -538,7 +539,8 @@
                     "Thursday",
                     "Friday"
                   ]
-                }
+                },
+                "timeZone": "GMT Standard Time"
               },
               "type": "Recurrence"
             }
@@ -693,7 +695,7 @@
                 "interval": 1,
                 "schedule": {
                   "hours": [
-                    "7"
+                    "8"
                   ],
                   "minutes": [
                     45
@@ -705,7 +707,8 @@
                     "Thursday",
                     "Friday"
                   ]
-                }
+                },
+                "timeZone": "GMT Standard Time"
               },
               "type": "Recurrence"
             }
