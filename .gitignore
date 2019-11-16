@@ -10,3 +10,9 @@
 /DailyBingChallengeBot.Tests/obj
 /DailyBingChallengeChooserBot/Properties/PublishProfiles
 /.vs/WhereOnEarthBot/config/applicationhost.config
+/WhereOnEarthDeployment/bin/Release/staging/WhereOnEarthBotDeployment
+/WhereOnEarthBot/Properties
+/WhereOnEarthBot/PostDeployScripts
+/WhereOnEarth.Tests/Properties
+/WhereOnEarth.Tests/obj
+/WhereOnEarth.Tests/bin

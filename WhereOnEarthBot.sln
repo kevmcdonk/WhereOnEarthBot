@@ -2,11 +2,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29009.5
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WhereOnEarthBot", "DailyBingChallengeChooserBot\WhereOnEarthBot.csproj", "{78D7BF8C-2612-4658-B99A-55158A3A58A9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WhereOnEarthBot", "WhereOnEarthBot\WhereOnEarthBot.csproj", "{AAB6EF70-4248-40B0-B460-AB9601A2549D}"
 EndProject
-Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "WhereOnEarthBotDeployment", "DailyBingChallengeBotDeployment\WhereOnEarthBotDeployment.deployproj", "{F91AC8BD-2A3A-4A82-99C2-EF5026745D25}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{65FA6B23-9828-4ABA-86EE-075BB7774BB3}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WhereOnEarthBot.Tests", "DailyBingChallengeBot.Tests\WhereOnEarthBot.Tests.csproj", "{6F23786E-BC13-4E6E-803A-4325B3FF1908}"
+Project("{151D2E53-A2C4-4D7D-83FE-D05416EBD58E}") = "WhereOnEarthBotDeployment", "WhereOnEarthDeployment\WhereOnEarthBotDeployment.deployproj", "{F91AC8BD-2A3A-4A82-99C2-EF5026745D25}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WhereOnEarthBot.Tests", "WhereOnEarth.Tests\WhereOnEarthBot.Tests.csproj", "{7575D884-78F8-4059-B5DB-743C2A68E646}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -14,18 +16,18 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{78D7BF8C-2612-4658-B99A-55158A3A58A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{78D7BF8C-2612-4658-B99A-55158A3A58A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{78D7BF8C-2612-4658-B99A-55158A3A58A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{78D7BF8C-2612-4658-B99A-55158A3A58A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AAB6EF70-4248-40B0-B460-AB9601A2549D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AAB6EF70-4248-40B0-B460-AB9601A2549D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AAB6EF70-4248-40B0-B460-AB9601A2549D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AAB6EF70-4248-40B0-B460-AB9601A2549D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F91AC8BD-2A3A-4A82-99C2-EF5026745D25}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F91AC8BD-2A3A-4A82-99C2-EF5026745D25}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F91AC8BD-2A3A-4A82-99C2-EF5026745D25}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F91AC8BD-2A3A-4A82-99C2-EF5026745D25}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6F23786E-BC13-4E6E-803A-4325B3FF1908}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6F23786E-BC13-4E6E-803A-4325B3FF1908}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6F23786E-BC13-4E6E-803A-4325B3FF1908}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6F23786E-BC13-4E6E-803A-4325B3FF1908}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7575D884-78F8-4059-B5DB-743C2A68E646}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7575D884-78F8-4059-B5DB-743C2A68E646}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7575D884-78F8-4059-B5DB-743C2A68E646}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7575D884-78F8-4059-B5DB-743C2A68E646}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
