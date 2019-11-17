@@ -1,0 +1,57 @@
+{
+    "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.5/MicrosoftTeams.schema.json",
+    "manifestVersion": "1.5",
+    "version": "1.0.0",
+    "id": "a049369f-2451-403b-bf97-563e32447e95",
+    "packageName": "com.cps.bots.whereonearthbot",
+    "developer": {
+        "name": "<company name>",
+        "websiteUrl": "<website url>",
+        "privacyUrl": "<privacy url>",
+        "termsOfUseUrl": "<terms of use url>"
+    },
+    "icons": {
+        "color": "color.png",
+        "outline": "outline.png"
+    },
+    "name": {
+        "short": "WhereOnEarthBot"
+    },
+    "description": {
+        "short": "Daily challenge bot - who can guess the daily image from round the world",
+        "full": "Every day at 08:45, the Bot will ask the Team to pick either one of the Bing background pictures from the seven different counties available or it will select a random place from Google and choose a photo from there. Then, each team member has until 16:00 that day to guess where in the world the photo is. Once either all the people have guessed or it's 16:00, then the Bot will work out who was closest."
+    },
+    "accentColor": "#FEAE25",
+    "bots": [
+        {
+            "botId": "<bot id>",
+            "scopes": [
+                "team"
+            ],
+            "commandLists": [
+                {
+                    "scopes": [
+                        "team"
+                    ],
+                    "commands": [
+                        {
+                            "title": "Start daily challenge",
+                            "description": "Select this to start the challenge if not already triggered today"
+                        },
+                        {
+                            "title": "Check Results",
+                            "description": "Select this to trigger the checking of results but try not to do this before everyone has answered"
+                        }
+                    ]
+                }
+            ],
+            "supportsFiles": false,
+            "isNotificationOnly": false
+        }
+    ],
+    "permissions": [
+        "identity",
+        "messageTeamMembers"
+    ],
+    "validDomains": []
+}
