@@ -251,7 +251,7 @@
       "name": "[variables('azureTables_name')]",
       "location": "[parameters('resourceLocation')]",
       "properties": {
-        "displayName": "BingBot",
+        "displayName": "WhereOnEarthBot",
         "customParameterValues": {},
         "api": {
           "id": "[concat('/subscriptions/',subscription().subscriptionId,'/providers/Microsoft.Web/locations/',parameters('resourceLocation'),'/managedApis/', variables('azureTables_name'))]"
@@ -408,7 +408,7 @@
               },
               "type": "If"
             },
-            "Get_Daily_Bing": {
+            "Get_Daily_Challenge": {
               "runAfter": {},
               "type": "ApiConnection",
               "inputs": {
@@ -423,13 +423,13 @@
             },
             "Parse_JSON": {
               "runAfter": {
-                "Get_Daily_Bing": [
+                "Get_Daily_Challenge": [
                   "Succeeded"
                 ]
               },
               "type": "ParseJson",
               "inputs": {
-                "content": "@body('Get_Daily_Bing')",
+                "content": "@body('Get_Daily_Challenge')",
                 "schema": {
                   "properties": {
                     "PartitionKey": {
@@ -576,7 +576,7 @@
               },
               "type": "If"
             },
-            "Get_Daily_Bing": {
+            "Get_Daily_Challenge": {
               "runAfter": {},
               "type": "ApiConnection",
               "inputs": {
@@ -591,13 +591,13 @@
             },
             "Parse_JSON": {
               "runAfter": {
-                "Get_Daily_Bing": [
+                "Get_Daily_Challenge": [
                   "Succeeded"
                 ]
               },
               "type": "ParseJson",
               "inputs": {
-                "content": "@body('Get_Daily_Bing')",
+                "content": "@body('Get_Daily_Challenge')",
                 "schema": {
                   "properties": {
                     "PartitionKey": {

@@ -53,5 +53,7 @@
         "identity",
         "messageTeamMembers"
     ],
-    "validDomains": []
+    "validDomains": [
+        "<app domain>"
+    ]
 }
