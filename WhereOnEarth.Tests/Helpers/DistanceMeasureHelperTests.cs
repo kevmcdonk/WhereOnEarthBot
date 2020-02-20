@@ -17,6 +17,14 @@ namespace WhereOnEarthBot.Tests.Services
         public const double SanFranLatitude = 37.79653798062841;
         public const double SanFranLongitude = -122.55053625488281;
 
+        public const double CairngormsLatitude = -3.724302;
+        public const double CairngormsLongitude = 57.08122;
+        public const double AlpineNationalParkLatitude = 147.0891113;
+        public const double AlpineNationalParkLongitude = -37.00270844;
+        public const double CaliforniaLatitude = 147.0891113;
+        public const double CaliforniaLongitude = -37.00270844;
+
+
         [TestMethod]
         public void GetDistanceFromResult_LondonGlasgow()
         {
@@ -35,6 +43,22 @@ namespace WhereOnEarthBot.Tests.Services
 
         [TestMethod]
         public void GetDistanceFromResult_LondonCanberra()
+        {
+            var distance = DistanceMeasureHelper.GetDistanceFromResult((float)LondonLatitude, (float)LondonLongitude, CanberraLatitude, CanberraLongitude);
+            Assert.IsTrue(distance > 16900);
+            Assert.IsTrue(distance < 17100);
+        }
+
+        [TestMethod]
+        public void GetDistanceFromResult_CairngormsAlpineNationalParkAustralia()
+        {
+            var distance = DistanceMeasureHelper.GetDistanceFromResult((float)CairngormsLatitude, (float)CairngormsLongitude, AlpineNationalParkLatitude, AlpineNationalParkLongitude);
+            Assert.IsTrue(distance > 16900);
+            Assert.IsTrue(distance < 17100);
+        }
+
+        [TestMethod]
+        public void GetDistanceFromResult_CaliforniaAlpineNationalParkAustralia()
         {
             var distance = DistanceMeasureHelper.GetDistanceFromResult((float)LondonLatitude, (float)LondonLongitude, CanberraLatitude, CanberraLongitude);
             Assert.IsTrue(distance > 16900);

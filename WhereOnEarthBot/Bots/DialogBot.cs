@@ -164,18 +164,22 @@ namespace Microsoft.BotBuilderSamples.Bots
         {
             try
             {
+                Logger.LogInformation("Get challenge triggered");
                 var team = await this.tableService.getDailyChallengeTeamInfo();
                 var dailyChallenge = await tableService.GetDailyChallenge();
                 // If no photo selected, send update
                 if (dailyChallenge.photoUrl == null)
                 {
+                    Logger.LogInformation("No current photo so need to start dialog to ask");
+                    Logger.LogInformation("Team Service Url:" + team.ServiceUrl);
                     MicrosoftAppCredentials.TrustServiceUrl(team.ServiceUrl);
                     ConnectorClient connectorClient = new ConnectorClient(new Uri(team.ServiceUrl), Configuration["MicrosoftAppId"], Configuration["MicrosoftAppPassword"]);
                     var teamName = await this.GetTeamNameAsync(connectorClient, team.TeamId);
 
                     var bot = new ChannelAccount(team.BotId);
-                    string replyText = $"<at>@{teamName}</at> ";
-
+                    //string replyText = $"<at>@{teamName}</at> ";
+                    string replyText = $"{teamName}";
+                    Logger.LogInformation($"ReplyText:{replyText}");
                     var activity = MessageFactory.Text(replyText);
 
                     var mentioned = JObject.FromObject(new
@@ -187,7 +191,7 @@ namespace Microsoft.BotBuilderSamples.Bots
                     {
                         Properties = JObject.FromObject(new { mentioned = mentioned, text = replyText }),
                     };
-                    activity.Entities = new[] { mentionedEntity };
+                   // activity.Entities = new[] { mentionedEntity };
                     activity.Text = "It's time for the daily challenge " + replyText;
                     var convParams = new ConversationParameters()
                     {
@@ -198,9 +202,10 @@ namespace Microsoft.BotBuilderSamples.Bots
                         Activity = activity
                     };
 
+                    Logger.LogInformation("Attempting to create conversation. TenantID:" + team.TenantId + ", ChannelData Name: " + team.ChannelData.Channel.Name);
                     var conversation = await connectorClient.Conversations.CreateConversationAsync(convParams);
                     BotAdapter ba = (BotAdapter)adapter;
-
+                    Logger.LogInformation("Created conversation reference");
                     var conversationReference = new ConversationReference(conversation.ActivityId);
                     conversationReference.Bot = bot;
                     conversationReference.ChannelId = team.ChannelId;
@@ -210,10 +215,14 @@ namespace Microsoft.BotBuilderSamples.Bots
 
                     conversationReference.Conversation = convAccount;
                     conversationReference.ServiceUrl = team.ServiceUrl;
-
+                    Logger.LogInformation("Getting in to the conversation");
                     await ba.ContinueConversationAsync(Configuration["MicrosoftAppId"], conversationReference, TriggerBotCallback, default(CancellationToken));
                 }
 
+            }
+            catch (Microsoft.Bot.Schema.ErrorResponseException errEx)
+            {
+                Logger.LogError(errEx, $"Web error making pairups: {errEx.Message}:::{errEx.Body.Error.Message}");
             }
             catch (Exception ex)
             {
@@ -235,7 +244,8 @@ namespace Microsoft.BotBuilderSamples.Bots
                     var teamName = await this.GetTeamNameAsync(connectorClient, team.TeamId);
 
                     var bot = new ChannelAccount(team.BotId);
-                    string replyText = $"<at>@{teamName}</at> ";
+                    // string replyText = $"<at>@{teamName}</at> ";
+                    string replyText = $"@{teamName}";
 
                     var activity = MessageFactory.Text(replyText);
 
@@ -298,7 +308,8 @@ namespace Microsoft.BotBuilderSamples.Bots
                     var teamName = await this.GetTeamNameAsync(connectorClient, team.TeamId);
 
                     var bot = new ChannelAccount(team.BotId);
-                    string replyText = $"<at>@{teamName}</at> ";
+                    //string replyText = $"<at>@{teamName}</at> ";
+                    string replyText = $"@{teamName}";
 
                     var activity = MessageFactory.Text(replyText);
 

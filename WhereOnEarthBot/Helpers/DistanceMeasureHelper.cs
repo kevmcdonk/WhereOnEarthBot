@@ -11,12 +11,11 @@ namespace WhereOnEarthBot.Helpers
         {
             double magic = Math.PI / 180;
             double radius_km = 6367.4445;
-            double distanceFromResult = Math.Acos(Math.Sin(guessLatitude * magic)
-                * Math.Sin(actualLatitude * magic)
-                + Math.Cos(guessLatitude * magic)
-                * Math.Cos(actualLatitude * magic)
-                * Math.Cos(guessLongitude * magic - actualLongitude * magic)) * radius_km;
-
+            double distanceFromResult = Math.Acos(
+                (Math.Sin(guessLongitude * magic) * Math.Sin(actualLongitude * magic))
+                + (Math.Cos(guessLongitude * magic) * Math.Cos(actualLongitude * magic) * Math.Cos((guessLatitude * magic) - (actualLatitude * magic)))
+                ) * radius_km;
+     
             return distanceFromResult;
         }
     }
