@@ -3,25 +3,25 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "botName": {
-      "value": "WhereOnEarthBot"
+      "value": "WoEBotLocalDev"
     },
     "botIconUrl": {
       "value": "https://docs.botframework.com/static/devportal/client/images/bot-framework-default.png"
     },
     "botAppId": {
-      "value": ""
+      "value": "9dfd0f1e-2fe8-4ad0-9da5-a494a4a8f580"
     },
     "botAppPassword": {
-      "value": ""
+      "value": "m16U=_fYS-]46xV[aO_axa@x7.Lbr8Yn"
     },
     "resourceLocation": {
       "value": "westeurope"
     },
     "bingMapsAPI": {
-      "value": ""
+      "value": "AlEoR0iVqIKooGSa8JaXAAfDOWV4vvavQOS_EX1uNfpd2mrC2qsKe-TtsrbfZJ5e"
     },
     "googleMapsAPI": {
-      "value": ""
+      "value": "AIzaSyC5Fi-5RYU1ZScLiaFvc2aObDDGUmylZx4"
     }
   }
 }

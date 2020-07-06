@@ -9,6 +9,7 @@ namespace WhereOnEarthBot.Models
     public enum DailyChallengeStatus
     {
         NotSet,
+        Choosing,
         Guessing,
         Completed
     }

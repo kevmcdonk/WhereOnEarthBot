@@ -258,7 +258,7 @@ namespace Microsoft.BotBuilderSamples.Bots
                     {
                         Properties = JObject.FromObject(new { mentioned = mentioned, text = replyText }),
                     };
-                    activity.Entities = new[] { mentionedEntity };
+                    //activity.Entities = new[] { mentionedEntity };
                     activity.Text = "It's time for the results " + replyText;
                     var convParams = new ConversationParameters()
                     {
@@ -322,7 +322,7 @@ namespace Microsoft.BotBuilderSamples.Bots
                     {
                         Properties = JObject.FromObject(new { mentioned = mentioned, text = replyText }),
                     };
-                    activity.Entities = new[] { mentionedEntity };
+                    //activity.Entities = new[] { mentionedEntity };
                     activity.Text = "It's reminder time, " + replyText;
                     var convParams = new ConversationParameters()
                     {
